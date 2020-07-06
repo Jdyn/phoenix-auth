@@ -5,7 +5,7 @@ defmodule Nimble.MixProject do
     [
       app: :nimble,
       version: "0.1.0",
-      elixir: "~> 1.7",
+      elixir: "~> 1.10.4",
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: [:phoenix] ++ Mix.compilers(),
       start_permanent: Mix.env() == :prod,
@@ -35,13 +35,13 @@ defmodule Nimble.MixProject do
     [
       {:phoenix, "~> 1.5.3"},
       {:phoenix_ecto, "~> 4.1"},
-      {:ecto_sql, "~> 3.4"},
-      {:postgrex, ">= 0.0.0"},
       {:phoenix_live_dashboard, "~> 0.2.0"},
-      {:telemetry_metrics, "~> 0.4"},
-      {:telemetry_poller, "~> 0.4"},
-      {:jason, "~> 1.0"},
-      {:plug_cowboy, "~> 2.0"}
+      {:ecto_sql, "~> 3.4.4"},
+      {:postgrex, "~> 0.15.5"},
+      {:telemetry_metrics, "~> 0.5.0"},
+      {:telemetry_poller, "~> 0.5.0"},
+      {:jason, "~> 1.2.1"},
+      {:plug_cowboy, "~> 2.3.0"}
     ]
   end
 

@@ -2,26 +2,26 @@ defmodule Nimble.Router do
   use Nimble, :router
 
   pipeline :api do
-    plug :accepts, ["json"]
+    plug(:accepts, ["json"])
   end
 
-  scope "/api", Nimble do
-    pipe_through :api
-  end
-
-  # Enables LiveDashboard only for development
-  #
   # If you want to use the LiveDashboard in production, you should put
   # it behind authentication and allow only admins to access it.
-  # If your application does not have an admins-only section yet,
-  # you can use Plug.BasicAuth to set up some basic authentication
-  # as long as you are also using SSL (which you should anyway).
-  if Mix.env() in [:dev, :test] do
-    import Phoenix.LiveDashboard.Router
+  # if Mix.env() in [:dev, :test] do
+  #   import Phoenix.LiveDashboard.Router
+  #   scope "/" do
+  #     pipe_through([:fetch_session, :protect_from_forgery])
+  #     live_dashboard("/dashboard", metrics: Nimble.Telemetry)
+  #   end
+  # end
 
-    scope "/" do
-      pipe_through [:fetch_session, :protect_from_forgery]
-      live_dashboard "/dashboard", metrics: Nimble.Telemetry
+  scope "/api", Nimble do
+    pipe_through(:api)
+
+    resources("/account", AccountControler, only: [], singleton: true) do
+      post("/signup", UserController, :sign_up)
+      post("/login", UserController, :log_in)
+
     end
   end
 end
