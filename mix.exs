@@ -39,6 +39,8 @@ defmodule Nimble.MixProject do
       {:telemetry_metrics, "~> 0.5.0"},
       {:telemetry_poller, "~> 0.5.0"},
       {:jason, "~> 1.2.1"},
+      {:cors_plug, "~> 2.0"},
+
 
       {:pbkdf2_elixir, "~> 1.0.0"},
 

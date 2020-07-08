@@ -9,8 +9,8 @@ defmodule Nimble.UserController do
 
   # Valid for 60 days.
   @max_age 60 * 60 * 24 * 60
-  @remember_me_cookie "auth-token"
-  @remember_me_options [sign: true, max_age: @max_age]
+  @remember_me_cookie "auth_token"
+  @remember_me_options [sign: false, max_age: @max_age]
 
   def show(conn, _params) do
     conn
@@ -64,10 +64,10 @@ defmodule Nimble.UserController do
         conn
         |> renew_session()
         |> put_session(:user_token, token)
-        |> create_remember_token(token)
+        |> create_remember_token(Base.url_encode64(token, padding: false))
         |> put_status(:ok)
         |> put_view(UserView)
-        |> render("show.json", user: user)
+        |> render("login.json", %{user: user, token: Base.url_encode64(token, padding: false)})
     end
   end
 

@@ -5,7 +5,7 @@ defmodule Nimble.Auth.FetchUser do
   alias Nimble.Service.Users
 
   @max_age 60 * 60 * 24 * 60
-  @remember_me_cookie "auth-token"
+  @remember_me_cookie "auth_token"
   @remember_me_options [sign: true, max_age: @max_age]
 
   def init(opts), do: opts
@@ -29,10 +29,11 @@ defmodule Nimble.Auth.FetchUser do
         {user_token, put_resp_cookie(conn, @remember_me_cookie, user_token, @remember_me_options)}
       end
     else
-      conn = fetch_cookies(conn, signed: [@remember_me_cookie])
+      conn = fetch_cookies(conn)
+      %{"auth-token" => auth_token} = conn.cookies
 
-      if user_token = conn.cookies[@remember_me_cookie] do
-        {user_token, put_session(conn, :user_token, user_token)}
+      if (auth_token) do
+        {Base.url_decode64!(auth_token, padding: false), conn}
       else
         {nil, conn}
       end
