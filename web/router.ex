@@ -1,8 +1,15 @@
 defmodule Nimble.Router do
-  use Nimble, :router
+  use Nimble.Web, :router
 
   pipeline :api do
     plug(:accepts, ["json"])
+    plug(:fetch_session)
+    plug(:put_secure_browser_headers)
+  end
+
+  pipeline :ensure_auth do
+    plug(Nimble.Auth.FetchUser)
+    plug(Nimble.Auth.EnsureAuth)
   end
 
   # If you want to use the LiveDashboard in production, you should put
@@ -15,13 +22,17 @@ defmodule Nimble.Router do
   #   end
   # end
 
-  scope "/api", Nimble do
+  scope "/api/v1", Nimble do
     pipe_through(:api)
 
-    resources("/account", AccountControler, only: [], singleton: true) do
-      post("/signup", UserController, :sign_up)
-      post("/login", UserController, :log_in)
+    post("/account/signup", UserController, :sign_up)
+    post("/account/login", UserController, :log_in)
+    delete("/account/logout", UserController, :log_out)
+  end
 
-    end
+  scope "/api/v1", Nimble do
+    pipe_through([:api, :ensure_auth])
+
+    get("/account", UserController, :show)
   end
 end

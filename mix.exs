@@ -15,7 +15,6 @@ defmodule Nimble.MixProject do
   end
 
   # Configuration for the OTP application.
-  #
   # Type `mix help compile.app` for more information.
   def application do
     [
@@ -29,7 +28,6 @@ defmodule Nimble.MixProject do
   defp elixirc_paths(_), do: ["lib", "web"]
 
   # Specifies your project dependencies.
-  #
   # Type `mix help deps` for examples and options.
   defp deps do
     [
@@ -41,6 +39,9 @@ defmodule Nimble.MixProject do
       {:telemetry_metrics, "~> 0.5.0"},
       {:telemetry_poller, "~> 0.5.0"},
       {:jason, "~> 1.2.1"},
+
+      {:pbkdf2_elixir, "~> 1.0.0"},
+
       {:plug_cowboy, "~> 2.3.0"}
     ]
   end

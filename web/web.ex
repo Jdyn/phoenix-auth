@@ -1,4 +1,4 @@
-defmodule Nimble do
+defmodule Nimble.Web do
 
   def view do
     quote do
@@ -14,7 +14,9 @@ defmodule Nimble do
       use Ecto.Schema
 
       import Ecto
-      import Ecto.Query, only: [from: 1, from: 2]
+      import Ecto.Changeset
+      import Ecto.Query
+      import Ecto.Multi
 
       @timestamps_opts [type: :utc_datetime]
     end
@@ -23,6 +25,7 @@ defmodule Nimble do
   def controller do
     quote do
       use Phoenix.Controller, namespace: Nimble
+      import Ecto.Query
 
       import Plug.Conn
       alias Nimble.Router.Helpers, as: Routes
@@ -41,9 +44,6 @@ defmodule Nimble do
   def router do
     quote do
       use Phoenix.Router
-
-      import Plug.Conn
-      import Phoenix.Controller
     end
   end
 

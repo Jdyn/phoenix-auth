@@ -6,7 +6,7 @@ defmodule Nimble.Endpoint do
   # Set :encryption_salt if you would also like to encrypt it.
   @session_options [
     store: :cookie,
-    key: "_nimble_key",
+    key: "session_id",
     signing_salt: "AwA3CM4V"
   ]
 
