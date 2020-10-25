@@ -8,6 +8,7 @@ defmodule Nimble.Router do
   end
 
   pipeline :ensure_auth do
+    plug(:fetch_session)
     plug(Nimble.Auth.FetchUser)
     plug(Nimble.Auth.EnsureAuth)
   end
@@ -27,12 +28,13 @@ defmodule Nimble.Router do
 
     post("/account/signup", UserController, :sign_up)
     post("/account/login", UserController, :log_in)
-    delete("/account/logout", UserController, :log_out)
   end
 
   scope "/api/v1", Nimble do
     pipe_through([:api, :ensure_auth])
 
     get("/account", UserController, :show)
+    delete("/account/logout", UserController, :log_out)
+
   end
 end

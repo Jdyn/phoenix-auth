@@ -30,7 +30,7 @@ defmodule Nimble.Auth.FetchUser do
       end
     else
       conn = fetch_cookies(conn)
-      %{"auth-token" => auth_token} = conn.cookies
+      auth_token = conn.cookies[@remember_me_cookie]
 
       if (auth_token) do
         {Base.url_decode64!(auth_token, padding: false), conn}
