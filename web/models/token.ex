@@ -65,13 +65,15 @@ defmodule Nimble.Token do
     token = :crypto.strong_rand_bytes(@rand_size)
     hashed_token = :crypto.hash(@hash_algorithm, token)
 
-    {Base.url_encode64(token, padding: false),
+    {
+      Base.url_encode64(token, padding: false),
      %Token{
        token: hashed_token,
        context: context,
        sent_to: sent_to,
        user_id: user.id
-     }}
+     }
+    }
   end
 
   @doc """
@@ -133,7 +135,7 @@ defmodule Nimble.Token do
   Gets all tokens for the given user for the given contexts.
   """
   def user_and_contexts_query(user, :all) do
-    from(t in Token, where: t.user_id == ^user.id)
+    from(t in Token, where: t.user_id == ^user.id, order_by: [desc: t.inserted_at])
   end
 
   def user_and_contexts_query(user, [_ | _] = contexts) do

@@ -5,7 +5,7 @@ defmodule Nimble.MixProject do
     [
       app: :nimble,
       version: "0.1.0",
-      elixir: "~> 1.10.4",
+      elixir: "~> 1.11.2",
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: [:phoenix] ++ Mix.compilers(),
       start_permanent: Mix.env() == :prod,
@@ -56,7 +56,7 @@ defmodule Nimble.MixProject do
   defp aliases do
     [
       setup: ["deps.get", "ecto.setup"],
-      "ecto.setup": ["ecto.create", "ecto.migrate", "run repo/seeds.exs"],
+      "ecto.setup": ["ecto.create", "ecto.migrate"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
       test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"]
     ]

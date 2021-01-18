@@ -34,6 +34,7 @@ defmodule Nimble.Router do
     pipe_through([:api, :ensure_auth])
 
     get("/account", UserController, :show)
+    get("/account/sessions", UserController, :show_sessions)
     delete("/account/logout", UserController, :log_out)
 
   end

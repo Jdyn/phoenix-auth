@@ -17,4 +17,13 @@ defmodule Nimble.Service.Tokens do
     Repo.delete_all(Token.token_and_context_query(token, "session"))
     :ok
   end
+
+  @doc """
+  Returns all tokens for the given user.
+  """
+  def find_all(user) do
+    Token.user_and_contexts_query(user, :all)
+    |> Repo.all()
+    |> Repo.preload(:user)
+  end
 end

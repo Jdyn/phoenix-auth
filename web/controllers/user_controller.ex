@@ -9,14 +9,29 @@ defmodule Nimble.UserController do
 
   # Valid for 60 days.
   @max_age 60 * 60 * 24 * 60
-  @remember_me_cookie "auth_token"
-  @remember_me_options [sign: false, max_age: @max_age]
+  @remember_me_cookie "remember_token"
+  @remember_me_options [sign: true, max_age: @max_age, same_site: "Lax"]
 
   def show(conn, _params) do
+    token = get_session(conn, :user_token)
+
+    conn
+    |> put_status(:ok)
+    |> put_remember_token(token)
+    |> configure_session(renew: true)
+    |> put_view(UserView)
+    |> render("show.json", user: conn.assigns[:current_user])
+  end
+
+  def show_sessions(conn, _params) do
+    current_user = conn.assigns[:current_user]
+
+    tokens = Tokens.find_all(current_user)
+
     conn
     |> put_status(:ok)
     |> put_view(UserView)
-    |> render("show.json", user: conn.assigns[:current_user])
+    |> render("sessions.json", tokens: tokens)
   end
 
   @doc """
@@ -31,7 +46,7 @@ defmodule Nimble.UserController do
         conn
         |> renew_session()
         |> put_session(:user_token, token)
-        |> create_remember_token(token)
+        |> put_remember_token(token)
         |> put_status(:created)
         |> put_view(UserView)
         |> render("show.json", user: user)
@@ -64,10 +79,10 @@ defmodule Nimble.UserController do
         conn
         |> renew_session()
         |> put_session(:user_token, token)
-        |> create_remember_token(Base.url_encode64(token, padding: false))
+        |> put_remember_token(token)
         |> put_status(:ok)
         |> put_view(UserView)
-        |> render("login.json", %{user: user, token: Base.url_encode64(token, padding: false)})
+        |> render("login.json", user: user)
     end
   end
 
@@ -87,8 +102,9 @@ defmodule Nimble.UserController do
     |> render("ok.json")
   end
 
-  defp create_remember_token(conn, token),
-    do: put_resp_cookie(conn, @remember_me_cookie, token, @remember_me_options)
+  defp put_remember_token(conn, token) do
+    put_resp_cookie(conn, @remember_me_cookie, token, @remember_me_options)
+  end
 
   defp renew_session(conn) do
     conn
