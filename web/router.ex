@@ -13,16 +13,6 @@ defmodule Nimble.Router do
     plug(Nimble.Auth.EnsureAuth)
   end
 
-  # If you want to use the LiveDashboard in production, you should put
-  # it behind authentication and allow only admins to access it.
-  # if Mix.env() in [:dev, :test] do
-  #   import Phoenix.LiveDashboard.Router
-  #   scope "/" do
-  #     pipe_through([:fetch_session, :protect_from_forgery])
-  #     live_dashboard("/dashboard", metrics: Nimble.Telemetry)
-  #   end
-  # end
-
   scope "/api/v1", Nimble do
     pipe_through(:api)
 

@@ -4,7 +4,7 @@ defmodule Nimble.UserController do
   import Plug.Conn
   import Phoenix.Controller
 
-  alias Nimble.{Accounts, ErrorView, UserView}
+  alias Nimble.{ErrorView, UserView}
   alias Nimble.Service.{Accounts, Tokens}
 
   # Valid for 60 days.
