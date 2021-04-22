@@ -31,18 +31,16 @@ defmodule Nimble.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
-      {:phoenix, "~> 1.5.3"},
-      {:phoenix_ecto, "~> 4.1"},
+      {:phoenix, "~> 1.5.8"},
+      {:phoenix_ecto, "~> 4.2.1"},
       {:phoenix_live_dashboard, "~> 0.2.0"},
-      {:ecto_sql, "~> 3.4.4"},
-      {:postgrex, "~> 0.15.5"},
+      {:ecto_sql, "~> 3.6.1"},
+      {:postgrex, "~> 0.15.8"},
       {:telemetry_metrics, "~> 0.5.0"},
       {:telemetry_poller, "~> 0.5.0"},
       {:jason, "~> 1.2.1"},
       {:cors_plug, "~> 2.0"},
-
       {:pbkdf2_elixir, "~> 1.0.0"},
-
       {:plug_cowboy, "~> 2.3.0"}
     ]
   end
