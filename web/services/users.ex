@@ -3,9 +3,7 @@ defmodule Nimble.Service.Users do
 
   @doc """
   Retrieve a User by a parameter that exists on a %User{} struct.
-
   ## Examples
-
       iex> find_by(email: "test@test.com")
       %User{}
 

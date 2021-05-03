@@ -33,7 +33,6 @@ defmodule Nimble.Service.Accounts do
       {:ok, %User{}}
       iex> register_user(%{field: bad_value})
       {:error, %Ecto.Changeset{}}
-
   """
   def register(attrs) do
     %User{}

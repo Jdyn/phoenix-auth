@@ -23,7 +23,8 @@ defmodule Nimble.UserView do
 
   def render("ok.json", _) do
     %{
-      ok: true
+      ok: true,
+      result: %{}
     }
   end
 

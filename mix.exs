@@ -5,7 +5,7 @@ defmodule Nimble.MixProject do
     [
       app: :nimble,
       version: "0.1.0",
-      elixir: "~> 1.11.2",
+      elixir: "~> 1.11.4",
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: [:phoenix] ++ Mix.compilers(),
       start_permanent: Mix.env() == :prod,
