@@ -22,7 +22,6 @@ defmodule Nimble.User do
 
     field(:is_admin, :boolean, default: false)
 
-
     has_many(:tokens, Token)
 
     timestamps()

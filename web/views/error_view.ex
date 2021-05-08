@@ -1,8 +1,9 @@
 defmodule Nimble.ErrorView do
   use Nimble.Web, :view
 
-  # If you want to customize a particular status code
-  # for a certain format, you may uncomment below.
+  alias Nimble.ErrorHelpers
+
+  # Customize a particular status code:
   # def render("500.json", _assigns) do
   #   %{errors: %{detail: "Internal Server Error"}}
   # end
@@ -10,15 +11,12 @@ defmodule Nimble.ErrorView do
   def render("changeset_error.json", %{changeset: changeset}) do
     errors =
       Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->
-        Enum.reduce(opts, msg, fn {key, value}, acc ->
-          String.replace(acc, "%{#{key}}", to_string(value))
-        end)
+        ErrorHelpers.translate_error({msg, opts})
       end)
 
     %{
       ok: false,
-      errors: errors,
-      result: %{}
+      errors: errors
     }
   end
 
@@ -27,12 +25,5 @@ defmodule Nimble.ErrorView do
       ok: false,
       error: reason
     }
-  end
-
-  # By default, Phoenix returns the status message from
-  # the template name. For example, "404.json" becomes
-  # "Not Found".
-  def template_not_found(template, _assigns) do
-    %{errors: %{detail: Phoenix.Controller.status_message_from_template(template)}}
   end
 end
