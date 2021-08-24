@@ -6,6 +6,7 @@ defmodule Nimble.TokenView do
   def render("token.json", %{token: token}) do
     %{
       token: Base.url_encode64(token.token, padding: false),
+      trackerId: token.tracker_id,
       context: token.context,
       insertedAt: token.inserted_at,
       user: render_one(token.user, UserView, "user.json", as: :user)

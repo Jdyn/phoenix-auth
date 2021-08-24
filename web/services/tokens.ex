@@ -1,5 +1,5 @@
 defmodule Nimble.Service.Tokens do
-  alias Nimble.{Repo, Token}
+  alias Nimble.{Repo, Token, User}
 
   @doc """
   Generates a session token.
@@ -16,6 +16,16 @@ defmodule Nimble.Service.Tokens do
   def delete_session_token(token) do
     Repo.delete_all(Token.token_and_context_query(token, "session"))
     :ok
+  end
+
+  def delete_session_token(%User{} = user, tracking_id) do
+    case Repo.one(Token.user_and_tracker_id_query(user, tracking_id)) do
+      nil ->
+        {:error, "Session does not exist."}
+      token ->
+        Repo.delete_all(Token.user_and_tracker_id_query(user, tracking_id))
+        {:ok, token |> Repo.preload(:user)}
+    end
   end
 
   @doc """

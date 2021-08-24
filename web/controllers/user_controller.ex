@@ -5,7 +5,7 @@ defmodule Nimble.UserController do
   import Phoenix.Controller
 
   alias Nimble.{ErrorView, UserView}
-  alias Nimble.Service.{Accounts, Tokens}
+  alias Nimble.Service.{Accounts, Users, Tokens}
 
   # Valid for 60 days.
   @max_age 60 * 60 * 24 * 60
@@ -32,6 +32,24 @@ defmodule Nimble.UserController do
     |> put_status(:ok)
     |> put_view(UserView)
     |> render("sessions.json", tokens: tokens)
+  end
+
+  def delete_session(conn, %{"tracker_id" => tracker_id}) do
+    current_user = conn.assigns[:current_user]
+
+    case Tokens.delete_session_token(current_user, tracker_id) do
+      {:error, reason} ->
+        conn
+        |> put_status(:bad_request)
+        |> put_view(ErrorView)
+        |> render("error.json", error: reason)
+
+      {:ok, token} ->
+        conn
+        |> put_status(:ok)
+        |> put_view(UserView)
+        |> render("session.json", token: token)
+    end
   end
 
   @doc """
@@ -64,7 +82,13 @@ defmodule Nimble.UserController do
   It renews the session ID and clears the whole session
   to avoid fixation attacks.
   """
-  def log_in(conn, %{"email" => email, "password" => password} = _params) do
+  def sign_in(conn, %{"email" => email, "password" => password} = _params) do
+    # if token = get_session(conn, :user_token) do
+    #   user = token && Users.find_by_session_token(token)
+
+    #   render(conn, "login.json", user: user)
+    # end
+
     case Accounts.authenticate(email, password) do
       {:error, reason} ->
         conn
@@ -90,7 +114,7 @@ defmodule Nimble.UserController do
   Logs the user out.
   It clears all session data for safety. See renew_session.
   """
-  def log_out(conn, _params) do
+  def sign_out(conn, _params) do
     token = get_session(conn, :user_token)
     token && Tokens.delete_session_token(token)
 

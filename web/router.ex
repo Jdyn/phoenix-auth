@@ -13,18 +13,22 @@ defmodule Nimble.Router do
     plug(Nimble.Auth.EnsureAuth)
   end
 
-  scope "/api/v1", Nimble do
+  scope "/api", Nimble do
     pipe_through(:api)
 
-    post("/account/signup", UserController, :sign_up)
-    post("/account/login", UserController, :log_in)
+    resources("/account", UserController, singleton: true, only: []) do
+      post("/signup", UserController, :sign_up)
+      post("/signin", UserController, :sign_in)
+    end
   end
 
-  scope "/api/v1", Nimble do
+  scope "/api", Nimble do
     pipe_through([:api, :ensure_auth])
 
-    get("/account", UserController, :show)
-    get("/account/sessions", UserController, :show_sessions)
-    delete("/account/logout", UserController, :log_out)
+    resources("/account", UserController, singleton: true, only: [:show]) do
+      get("/sessions", UserController, :show_sessions)
+      delete("/sessions/:tracker_id", UserController, :delete_session)
+      delete("/signout", UserController, :sign_out)
+    end
   end
 end

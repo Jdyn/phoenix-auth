@@ -5,6 +5,7 @@ defmodule Nimble.Repo.Migrations.CreateTokens do
     create table(:tokens) do
       add(:user_id, references(:users, on_delete: :delete_all), null: false)
       add(:token, :binary, null: false)
+      add(:tracker_id, :string, null: false)
       add(:context, :string, null: false)
       add(:sent_to, :string)
 

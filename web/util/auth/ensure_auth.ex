@@ -11,7 +11,7 @@ defmodule Nimble.Auth.EnsureAuth do
   If you want to enforce the user e-mail is confirmed before
   they use the application at all, here would be a good place.
   """
-  def call(conn, _opts) do
+  def call(conn, _opts \\ %{}) do
     if conn.assigns[:current_user] do
       conn
     else

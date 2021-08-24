@@ -44,4 +44,13 @@ defmodule Nimble.UserView do
       }
     }
   end
+
+  def render("session.json", %{token: token}) do
+    %{
+      ok: true,
+      result: %{
+        token: render_one(token, TokenView, "token.json", as: :token)
+      }
+    }
+  end
 end

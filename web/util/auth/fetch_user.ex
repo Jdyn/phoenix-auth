@@ -12,14 +12,14 @@ defmodule Nimble.Auth.FetchUser do
   Authenticates the user by looking into the session
   and remember me token.
   """
-  def call(conn, _opts) do
+  def call(conn, _opts \\ %{}) do
     {token, conn} = ensure_user_token(conn)
     user = token && Users.find_by_session_token(token)
 
     assign(conn, :current_user, user)
   end
 
-  defp ensure_user_token(conn) do
+  def ensure_user_token(conn) do
     if user_token = get_session(conn, :user_token) do
         {user_token, conn}
     else
