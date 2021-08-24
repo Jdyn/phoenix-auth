@@ -83,12 +83,8 @@ defmodule Nimble.UserController do
   to avoid fixation attacks.
   """
   def sign_in(conn, %{"email" => email, "password" => password} = _params) do
-    # if token = get_session(conn, :user_token) do
-    #   user = token && Users.find_by_session_token(token)
-
-    #   render(conn, "login.json", user: user)
-    # end
-
+    # TODO: Add check to see if user is trying to sign in while simultaneously sending
+    # a valid session to server.. In that case no need to create new session
     case Accounts.authenticate(email, password) do
       {:error, reason} ->
         conn
