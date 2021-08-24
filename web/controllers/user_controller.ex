@@ -5,7 +5,7 @@ defmodule Nimble.UserController do
   import Phoenix.Controller
 
   alias Nimble.{ErrorView, UserView}
-  alias Nimble.Service.{Accounts, Users, Tokens}
+  alias Nimble.Service.{Accounts, Tokens}
 
   # Valid for 60 days.
   @max_age 60 * 60 * 24 * 60
