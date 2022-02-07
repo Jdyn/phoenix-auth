@@ -5,7 +5,7 @@ defmodule Nimble.MixProject do
     [
       app: :nimble,
       version: "0.1.0",
-      elixir: "~> 1.12.2",
+      elixir: "~> 1.13.1",
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: [:phoenix] ++ Mix.compilers(),
       start_permanent: Mix.env() == :prod,
@@ -19,7 +19,7 @@ defmodule Nimble.MixProject do
   def application do
     [
       mod: {Nimble.Application, []},
-      extra_applications: [:logger, :runtime_tools, :os_mon]
+      extra_applications: [:logger, :runtime_tools]
     ]
   end
 
@@ -31,13 +31,12 @@ defmodule Nimble.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
-      {:phoenix, "~> 1.5.8"},
+      {:phoenix, "~> 1.6.6"},
       {:phoenix_ecto, "~> 4.2.1"},
-      {:phoenix_live_dashboard, "~> 0.2.0"},
       {:ecto_sql, "~> 3.6.1"},
-      {:postgrex, "~> 0.15.8"},
-      {:telemetry_metrics, "~> 0.5.0"},
-      {:telemetry_poller, "~> 0.5.0"},
+      {:postgrex, "~> 0.15.0"},
+      {:telemetry_metrics, "~> 0.4.0"},
+      {:telemetry_poller, "~> 0.4.0"},
       {:jason, "~> 1.2.1"},
       {:cors_plug, "~> 2.0"},
       {:pbkdf2_elixir, "~> 1.0.0"},

@@ -27,7 +27,8 @@ defmodule Nimble.Router do
 
     resources("/account", UserController, singleton: true, only: [:show]) do
       get("/sessions", UserController, :show_sessions)
-      delete("/sessions/:tracker_id", UserController, :delete_session)
+      delete("/sessions/clear", UserController, :delete_sessions)
+      delete("/sessions/:tracking_id", UserController, :delete_session)
       delete("/signout", UserController, :sign_out)
     end
   end

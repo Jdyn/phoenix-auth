@@ -1,24 +1,21 @@
 defmodule Nimble.Service.Accounts do
-  import Pbkdf2, only: [check_pass: 2]
 
   alias Nimble.Repo
   alias Nimble.{User, Token}
   alias Nimble.Service.{Users}
 
   def authenticate(email, password) when is_binary(email) and is_binary(password) do
-    error = {:error, "Email or Password is incorrect."}
+    error = {:unauthorized, "Email or Password is incorrect."}
 
     case Users.find_by(email: email) do
       nil ->
         error
 
       user ->
-        case check_pass(user, password) do
-          {:ok, user} ->
+        if User.valid_password?(user, password) do
             {:ok, user}
-
-          {:error, _} ->
-            error
+        else
+          error
         end
     end
   end

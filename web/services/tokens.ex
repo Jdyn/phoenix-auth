@@ -19,13 +19,20 @@ defmodule Nimble.Service.Tokens do
   end
 
   def delete_session_token(%User{} = user, tracking_id) do
-    case Repo.one(Token.user_and_tracker_id_query(user, tracking_id)) do
-      nil ->
-        {:error, "Session does not exist."}
-      token ->
-        Repo.delete_all(Token.user_and_tracker_id_query(user, tracking_id))
-        {:ok, token |> Repo.preload(:user)}
+    if token = Repo.one(Token.user_and_tracking_id_query(user, tracking_id)) do
+      Repo.delete_all(Token.user_and_tracking_id_query(user, tracking_id))
+      :ok
+    else
+      {:not_found, "Session does not exist."}
     end
+  end
+
+  @doc """
+  Deletes all session tokens except current session.
+  """
+  def delete_session_tokens(%User{} = user, token) do
+    Repo.delete_all(Token.user_and_other_session_tokens(user, token))
+    :ok
   end
 
   @doc """

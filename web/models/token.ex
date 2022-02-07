@@ -9,7 +9,7 @@ defmodule Nimble.Token do
 
   @hash_algorithm :sha256
   @rand_size 32
-  @tracker_id_size 16
+  @tracking_id_size 16
 
   @reset_password_validity_in_days 1
   @confirm_validity_in_days 7
@@ -20,7 +20,7 @@ defmodule Nimble.Token do
     field(:token, :binary)
     field(:context, :string)
     field(:sent_to, :string)
-    field(:tracker_id, :string)
+    field(:tracking_id, :string)
 
     belongs_to(:user, User)
 
@@ -34,13 +34,13 @@ defmodule Nimble.Token do
   """
   def build_session_token(user) do
     token = :crypto.strong_rand_bytes(@rand_size)
-    tracker_id = build_tracker_id(@tracker_id_size)
+    tracking_id = build_tracking_id(@tracking_id_size)
 
     {
       token,
       %Token{
         token: token,
-        tracker_id: tracker_id,
+        tracking_id: tracking_id,
         context: "session",
         user_id: user.id
       }
@@ -75,7 +75,7 @@ defmodule Nimble.Token do
 
   defp build_hashed_token(user, context, sent_to) do
     token = :crypto.strong_rand_bytes(@rand_size)
-    tracker_id = build_tracker_id(@tracker_id_size)
+    tracking_id = build_tracking_id(@tracking_id_size)
 
     hashed_token = :crypto.hash(@hash_algorithm, token)
 
@@ -83,7 +83,7 @@ defmodule Nimble.Token do
       Base.url_encode64(token, padding: false),
       %Token{
         token: hashed_token,
-        tracker_id: tracker_id,
+        tracking_id: tracking_id,
         context: context,
         sent_to: sent_to,
         user_id: user.id
@@ -91,7 +91,7 @@ defmodule Nimble.Token do
     }
   end
 
-  defp build_tracker_id(size) do
+  defp build_tracking_id(size) do
     :crypto.strong_rand_bytes(size)
     |> Base.url_encode64(padding: false)
     |> binary_part(0, size)
@@ -153,6 +153,13 @@ defmodule Nimble.Token do
   end
 
   @doc """
+  Returns all session tokens except the given session token.
+  """
+  def user_and_other_session_tokens(user, token) do
+    from(t in Token, where: t.token != ^token and t.user_id == ^user.id and t.context == "session")
+  end
+
+  @doc """
   Gets all tokens for the given user for the given contexts.
   """
   def user_and_contexts_query(user, :all) do
@@ -163,7 +170,7 @@ defmodule Nimble.Token do
     from(t in Token, where: t.user_id == ^user.id and t.context in ^contexts)
   end
 
-  def user_and_tracker_id_query(user, tracking_id) do
-    from(t in Token, where: t.user_id == ^user.id and t.tracker_id == ^tracking_id, select: t)
+  def user_and_tracking_id_query(user, tracking_id) do
+    from(t in Token, where: t.user_id == ^user.id and t.tracking_id == ^tracking_id, select: t)
   end
 end

@@ -15,7 +15,7 @@ defmodule Nimble.Endpoint do
     longpoll: false
   )
 
-  socket("/live", Phoenix.LiveView.Socket, websocket: [connect_info: [session: @session_options]])
+  # socket("/live", Phoenix.LiveView.Socket, websocket: [connect_info: [session: @session_options]])
 
   # Code reloading can be explicitly enabled under the
   # :code_reloader configuration of your endpoint.
@@ -24,10 +24,10 @@ defmodule Nimble.Endpoint do
     plug(Phoenix.Ecto.CheckRepoStatus, otp_app: :nimble)
   end
 
-  plug(Phoenix.LiveDashboard.RequestLogger,
-    param_key: "request_logger",
-    cookie_key: "request_logger"
-  )
+  # plug(Phoenix.LiveDashboard.RequestLogger,
+  #   param_key: "request_logger",
+  #   cookie_key: "request_logger"
+  # )
 
   plug(Plug.RequestId)
   plug(Plug.Telemetry, event_prefix: [:phoenix, :endpoint])
