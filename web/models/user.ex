@@ -4,7 +4,6 @@ defmodule Nimble.User do
   """
 
   use Nimble.Web, :model
-  import Pbkdf2, only: [add_hash: 1, verify_pass: 2, no_user_verify: 0]
 
   alias Nimble.{User, UserToken}
 
@@ -54,7 +53,7 @@ defmodule Nimble.User do
   defp validate_password(changeset) do
     changeset
     |> validate_required([:password])
-    |> validate_length(:password, min: 10, max: 80)
+    |> validate_length(:password, min: 8, max: 80)
     |> validate_format(:password, ~r/[a-z]/, message: "at least one lower case character")
     |> validate_format(:password, ~r/[A-Z]/, message: "at least one upper case character")
     |> validate_format(:password, ~r/[!?@#$%^&*_0-9]/, message: "at least one digit or punctuation character")
@@ -65,7 +64,7 @@ defmodule Nimble.User do
     password = get_change(changeset, :password)
 
     changeset
-    |> change(add_hash(password))
+    |> change(Pbkdf2.add_hash(password))
     |> delete_change(:password)
   end
 
@@ -108,13 +107,9 @@ defmodule Nimble.User do
   """
   def valid_password?(%User{password_hash: password_hash}, password)
       when is_binary(password_hash) and byte_size(password) > 0 do
-    verify_pass(password, password_hash)
+        Pbkdf2.verify_pass(password, password_hash)
   end
-
-  def valid_password?(_, _) do
-    no_user_verify()
-    false
-  end
+  def valid_password?(_, _), do: Pbkdf2.no_user_verify()
 
   @doc """
   Validates the current password otherwise adds an error to the changeset.
