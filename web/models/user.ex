@@ -6,7 +6,7 @@ defmodule Nimble.User do
   use Nimble.Web, :model
   import Pbkdf2, only: [add_hash: 1, verify_pass: 2, no_user_verify: 0]
 
-  alias Nimble.{User, Token}
+  alias Nimble.{User, UserToken}
 
   schema "users" do
     field(:email, :string)
@@ -22,7 +22,7 @@ defmodule Nimble.User do
 
     field(:is_admin, :boolean, default: false)
 
-    has_many(:tokens, Token)
+    has_many(:tokens, UserToken)
 
     timestamps()
   end

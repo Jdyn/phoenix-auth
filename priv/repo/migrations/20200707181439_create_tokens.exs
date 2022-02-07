@@ -2,7 +2,7 @@ defmodule Nimble.Repo.Migrations.CreateTokens do
   use Ecto.Migration
 
   def change do
-    create table(:tokens) do
+    create table(:users_tokens) do
       add(:user_id, references(:users, on_delete: :delete_all), null: false)
       add(:token, :binary, null: false)
       add(:tracking_id, :string, null: false)
@@ -12,7 +12,7 @@ defmodule Nimble.Repo.Migrations.CreateTokens do
       timestamps(updated_at: false)
     end
 
-    create(index(:tokens, [:user_id]))
-    create(unique_index(:tokens, [:context, :token]))
+    create(index(:users_tokens, [:user_id]))
+    create(unique_index(:users_tokens, [:context, :token]))
   end
 end

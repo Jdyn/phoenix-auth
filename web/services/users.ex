@@ -1,5 +1,5 @@
 defmodule Nimble.Service.Users do
-  alias Nimble.{User, Repo, Token}
+  alias Nimble.{User, Repo, UserToken}
 
   @doc """
   Retrieve a User by a parameter that exists on a %User{} struct.
@@ -18,7 +18,7 @@ defmodule Nimble.Service.Users do
   Retrieve a User by a given signed session token.
   """
   def find_by_session_token(token) do
-    {:ok, query} = Token.verify_session_token_query(token)
+    {:ok, query} = UserToken.verify_session_token_query(token)
     Repo.one(query)
   end
 end

@@ -1,11 +1,11 @@
-defmodule Nimble.Token do
+defmodule Nimble.UserToken do
   @moduledoc """
-  Defines a Token for use with authenticating and verifying User operations
+  Defines a UserToken for use with authenticating and verifying User operations
   """
   use Ecto.Schema
   import Ecto.Query
 
-  alias Nimble.{User, Token}
+  alias Nimble.{User, UserToken}
 
   @hash_algorithm :sha256
   @rand_size 32
@@ -16,7 +16,7 @@ defmodule Nimble.Token do
   @change_email_validity_in_days 7
   @session_validity_in_days 60
 
-  schema "tokens" do
+  schema "users_tokens" do
     field(:token, :binary)
     field(:context, :string)
     field(:sent_to, :string)
@@ -38,7 +38,7 @@ defmodule Nimble.Token do
 
     {
       token,
-      %Token{
+      %UserToken{
         token: token,
         tracking_id: tracking_id,
         context: "session",
@@ -81,7 +81,7 @@ defmodule Nimble.Token do
 
     {
       Base.url_encode64(token, padding: false),
-      %Token{
+      %UserToken{
         token: hashed_token,
         tracking_id: tracking_id,
         context: context,
@@ -149,28 +149,28 @@ defmodule Nimble.Token do
   Returns the given token with the given context.
   """
   def token_and_context_query(token, context) do
-    from(Token, where: [token: ^token, context: ^context])
+    from(UserToken, where: [token: ^token, context: ^context])
   end
 
   @doc """
   Returns all session tokens except the given session token.
   """
   def user_and_other_session_tokens(user, token) do
-    from(t in Token, where: t.token != ^token and t.user_id == ^user.id and t.context == "session")
+    from(t in UserToken, where: t.token != ^token and t.user_id == ^user.id and t.context == "session")
   end
 
   @doc """
   Gets all tokens for the given user for the given contexts.
   """
   def user_and_contexts_query(user, :all) do
-    from(t in Token, where: t.user_id == ^user.id, order_by: [desc: t.inserted_at])
+    from(t in UserToken, where: t.user_id == ^user.id, order_by: [desc: t.inserted_at])
   end
 
   def user_and_contexts_query(user, [_ | _] = contexts) do
-    from(t in Token, where: t.user_id == ^user.id and t.context in ^contexts)
+    from(t in UserToken, where: t.user_id == ^user.id and t.context in ^contexts)
   end
 
   def user_and_tracking_id_query(user, tracking_id) do
-    from(t in Token, where: t.user_id == ^user.id and t.tracking_id == ^tracking_id, select: t)
+    from(t in UserToken, where: t.user_id == ^user.id and t.tracking_id == ^tracking_id, select: t)
   end
 end
