@@ -42,6 +42,7 @@ defmodule Nimble.Endpoint do
 
   plug(Plug.MethodOverride)
   plug(Plug.Head)
+  plug(Nimble.Auth.PublicIp)
   plug(Plug.Session, @session_options)
   plug(Nimble.Router)
 end

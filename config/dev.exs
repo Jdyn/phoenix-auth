@@ -22,6 +22,9 @@ config :nimble, Nimble.Endpoint,
   check_origin: false,
   watchers: []
 
+config :nimble, Nibmle.Mailer, adapter: Swoosh.Adapters.Local
+config :swoosh, :api_client, false
+
 # ## SSL Support
 #
 # In order to use HTTPS in development, a self-signed

@@ -1,26 +1,37 @@
-defmodule Nimble.Service.Accounts do
-
+defmodule Nimble.Identity do
   alias Nimble.Repo
-  alias Nimble.{User, UserToken}
-  alias Nimble.Service.{Users}
+  alias Nimble.{User, UserToken, UserNotifier}
 
-  def authenticate(email, password) when is_binary(email) and is_binary(password) do
-    error = {:unauthorized, "Email or Password is incorrect."}
+  @doc """
+  Retrieve a User by a parameter that exists on a %User{} struct.
+  ## Examples
+      iex> find_by(email: "test@test.com")
+      %User{}
 
-    case Users.find_by(email: email) do
-      nil ->
-        error
-
-      user ->
-        if User.valid_password?(user, password) do
-            {:ok, user}
-        else
-          error
-        end
-    end
+      iex> find_by(id: 105)
+      nil
+  """
+  def find_by(param) do
+    Repo.get_by(User, param)
   end
 
-  ## User registration
+  @doc """
+  Retrieve a User by a given signed session token.
+  """
+  def find_by_session_token(token) do
+    {:ok, query} = UserToken.verify_session_token_query(token)
+    Repo.one(query)
+  end
+
+  def authenticate(email, password) when is_binary(email) and is_binary(password) do
+    with %User{} = user <- find_by(email: email),
+         true <- User.valid_password?(user, password) do
+      {:ok, user}
+    else
+      _ ->
+        {:unauthorized, "Email or Password is incorrect."}
+    end
+  end
 
   @doc """
   Registers a user.
@@ -28,6 +39,7 @@ defmodule Nimble.Service.Accounts do
   ## Examples
       iex> register_user(%{field: value})
       {:ok, %User{}}
+
       iex> register_user(%{field: bad_value})
       {:error, %Ecto.Changeset{}}
   """
@@ -47,8 +59,6 @@ defmodule Nimble.Service.Accounts do
     User.registration_changeset(user, attrs)
   end
 
-  ## Settings
-
   @doc """
   Returns an `%Ecto.Changeset{}` for changing the user e-mail.
   ## Examples
@@ -65,6 +75,7 @@ defmodule Nimble.Service.Accounts do
   ## Examples
       iex> apply_user_email(user, "valid password", %{email: ...})
       {:ok, %User{}}
+
       iex> apply_user_email(user, "invalid password", %{email: ...})
       {:error, %Ecto.Changeset{}}
   """
@@ -115,6 +126,7 @@ defmodule Nimble.Service.Accounts do
   ## Examples
       iex> update_user_password(user, "valid password", %{password: ...})
       {:ok, %User{}}
+
       iex> update_user_password(user, "invalid password", %{password: ...})
       {:error, %Ecto.Changeset{}}
   """
@@ -147,7 +159,8 @@ defmodule Nimble.Service.Accounts do
          {:ok, %{user: user}} <- Repo.transaction(confirm_user_multi(user)) do
       {:ok, user}
     else
-      _ -> :error
+      _ ->
+        {:not_found, "Your link is either invalid, or your email has already been confirmed."}
     end
   end
 
@@ -177,6 +190,16 @@ defmodule Nimble.Service.Accounts do
   end
 
   @doc """
+  Gets a user by email.
+  ## Examples
+      iex> get_user_by_email("foo@example.com")
+      %User{}
+      iex> get_user_by_email("unknown@example.com")
+      nil
+  """
+  def get_user_by_email(email) when is_binary(email), do: Repo.get_by(User, email: email)
+
+  @doc """
   Resets the user password.
   ## Examples
       iex> reset_user_password(user, %{password: "new long password", password_confirmation: "new long password"})
@@ -193,5 +216,65 @@ defmodule Nimble.Service.Accounts do
       {:ok, %{user: user}} -> {:ok, user}
       {:error, :user, changeset, _} -> {:error, changeset}
     end
+  end
+
+  @doc """
+  Delivers the confirmation email instructions to the given user.
+  ## Examples
+      iex> deliver_user_confirmation_instructions(user, &Routes.user_confirmation_url(conn, :edit, &1))
+      {:ok, %{to: ..., body: ...}}
+      iex> deliver_user_confirmation_instructions(confirmed_user, &Routes.user_confirmation_url(conn, :edit, &1))
+      {:error, :already_confirmed}
+  """
+  def deliver_user_confirmation_instructions(%User{} = user) do
+    if user.confirmed_at do
+      {:error, :already_confirmed}
+    else
+      {encoded_token, user_token} = UserToken.build_email_token(user, "confirm")
+      Repo.insert!(user_token)
+      UserNotifier.deliver_confirmation_instructions(user, encoded_token)
+    end
+  end
+
+    @doc """
+  Generates a session token.
+  """
+  def create_session_token(user) do
+    {token, user_token} = UserToken.build_session_token(user)
+    Repo.insert!(user_token)
+    token
+  end
+
+  @doc """
+  Deletes the current session token.
+  """
+  def delete_session_token(token) do
+    Repo.delete_all(UserToken.token_and_context_query(token, "session"))
+    :ok
+  end
+
+  def delete_session_token(%User{} = user, tracking_id) do
+    if _token = Repo.one(UserToken.user_and_tracking_id_query(user, tracking_id)) do
+      Repo.delete_all(UserToken.user_and_tracking_id_query(user, tracking_id))
+      :ok
+    else
+      {:not_found, "Session does not exist."}
+    end
+  end
+
+  @doc """
+  Deletes all session tokens except current session.
+  """
+  def delete_session_tokens(%User{} = user, token) do
+    Repo.delete_all(UserToken.user_and_other_session_tokens(user, token))
+    :ok
+  end
+
+  @doc """
+  Returns all tokens for the given user.
+  """
+  def find_all(user) do
+    UserToken.user_and_contexts_query(user, :all)
+    |> Repo.all()
   end
 end
