@@ -5,7 +5,7 @@ defmodule Nimble.UserController do
   import Phoenix.Controller
 
   alias Nimble.{UserView}
-  alias Nimble.{Account}
+  alias Nimble.{Account, User}
 
   action_fallback(Nimble.ErrorController)
 
@@ -119,13 +119,12 @@ defmodule Nimble.UserController do
   def send_user_email_confirmation(conn, _params) do
     current_user = conn.assigns[:current_user]
 
-    if user = Account.get_user_by_email(current_user.email) do
-      Account.deliver_user_confirmation_instructions(user)
+    with %User{} = user <- Account.get_user_by_email(current_user.email),
+         :ok <- Account.deliver_user_confirmation_instructions(user) do
+      conn
+      |> put_status(:ok)
+      |> render("ok.json")
     end
-
-    conn
-    |> put_status(:ok)
-    |> render("ok.json")
   end
 
   def user_email_confirmation(conn, %{"token" => token}) do

@@ -228,15 +228,16 @@ defmodule Nimble.Account do
   """
   def deliver_user_confirmation_instructions(%User{} = user) do
     if user.confirmed_at do
-      {:error, :already_confirmed}
+      {:not_found, "Your email has already been confirmed."}
     else
       {encoded_token, user_token} = UserToken.build_email_token(user, "confirm")
       Repo.insert!(user_token)
       UserNotifier.deliver_confirmation_instructions(user, encoded_token)
+      :ok
     end
   end
 
-    @doc """
+  @doc """
   Generates a session token.
   """
   def create_session_token(user) do
