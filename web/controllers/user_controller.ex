@@ -5,7 +5,7 @@ defmodule Nimble.UserController do
   import Phoenix.Controller
 
   alias Nimble.{UserView}
-  alias Nimble.{Identity}
+  alias Nimble.{Account}
 
   action_fallback(Nimble.ErrorController)
 
@@ -27,7 +27,7 @@ defmodule Nimble.UserController do
   def show_sessions(conn, _params) do
     current_user = conn.assigns[:current_user]
 
-    tokens = Identity.find_all_sessions(current_user)
+    tokens = Account.find_all_sessions(current_user)
 
     conn
     |> put_status(:ok)
@@ -37,7 +37,7 @@ defmodule Nimble.UserController do
   def delete_session(conn, %{"tracking_id" => tracking_id}) do
     current_user = conn.assigns[:current_user]
 
-    with :ok <- Identity.delete_session_token(current_user, tracking_id) do
+    with :ok <- Account.delete_session_token(current_user, tracking_id) do
       render(conn, "ok.json")
     end
   end
@@ -45,7 +45,7 @@ defmodule Nimble.UserController do
   def delete_sessions(conn, _params) do
     current_user = conn.assigns[:current_user]
 
-    with :ok <- Identity.delete_session_tokens(current_user, get_session(conn, :user_token)) do
+    with :ok <- Account.delete_session_tokens(current_user, get_session(conn, :user_token)) do
       render(conn, "ok.json")
     end
   end
@@ -55,8 +55,8 @@ defmodule Nimble.UserController do
   Generates a new User and populates the session
   """
   def sign_up(conn, params) do
-    with {:ok, user} <- Identity.register(params) do
-      token = Identity.create_session_token(user)
+    with {:ok, user} <- Account.register(params) do
+      token = Account.create_session_token(user)
 
       conn
       |> renew_session()
@@ -73,9 +73,9 @@ defmodule Nimble.UserController do
   to avoid fixation attacks.
   """
   def sign_in(conn, %{"email" => email, "password" => password} = _params) do
-    with {:ok, user} <- Identity.authenticate(email, password),
+    with {:ok, user} <- Account.authenticate(email, password),
          nil <- get_session(conn, :user_token) do
-      token = Identity.create_session_token(user)
+      token = Account.create_session_token(user)
 
       conn
       |> renew_session()
@@ -96,7 +96,7 @@ defmodule Nimble.UserController do
   """
   def sign_out(conn, _params) do
     token = get_session(conn, :user_token)
-    token && Identity.delete_session_token(token)
+    token && Account.delete_session_token(token)
 
     conn
     |> renew_session()
@@ -119,8 +119,8 @@ defmodule Nimble.UserController do
   def send_user_email_confirmation(conn, _params) do
     current_user = conn.assigns[:current_user]
 
-    if user = Identity.get_user_by_email(current_user.email) do
-      Identity.deliver_user_confirmation_instructions(user)
+    if user = Account.get_user_by_email(current_user.email) do
+      Account.deliver_user_confirmation_instructions(user)
     end
 
     conn
@@ -129,7 +129,7 @@ defmodule Nimble.UserController do
   end
 
   def user_email_confirmation(conn, %{"token" => token}) do
-    with {:ok, _} <- Identity.confirm_user(token) do
+    with {:ok, _} <- Account.confirm_user(token) do
       conn
       |> put_status(:ok)
       |> render("ok.json")

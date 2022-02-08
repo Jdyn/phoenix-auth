@@ -1,4 +1,4 @@
-defmodule Nimble.Identity do
+defmodule Nimble.Account do
   alias Nimble.Repo
   alias Nimble.{User, UserToken, UserNotifier}
 

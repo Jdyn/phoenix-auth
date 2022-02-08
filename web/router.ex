@@ -8,7 +8,6 @@ defmodule Nimble.Router do
   end
 
   pipeline :ensure_auth do
-    plug(:fetch_session)
     plug(Nimble.Auth.FetchUser)
     plug(Nimble.Auth.EnsureAuth)
   end
