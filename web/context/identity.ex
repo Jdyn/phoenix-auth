@@ -266,7 +266,7 @@ defmodule Nimble.Identity do
   Deletes all session tokens except current session.
   """
   def delete_session_tokens(%User{} = user, token) do
-    Repo.delete_all(UserToken.user_and_other_session_tokens(user, token))
+    Repo.delete_all(UserToken.user_and_session_tokens(user, token))
     :ok
   end
 
@@ -275,6 +275,11 @@ defmodule Nimble.Identity do
   """
   def find_all(user) do
     UserToken.user_and_contexts_query(user, :all)
+    |> Repo.all()
+  end
+
+  def find_all_sessions(user) do
+    UserToken.user_and_session_tokens(user)
     |> Repo.all()
   end
 end

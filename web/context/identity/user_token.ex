@@ -35,13 +35,14 @@ defmodule Nimble.UserToken do
   def build_session_token(user) do
     token = :crypto.strong_rand_bytes(@rand_size)
     tracking_id = build_tracking_id(@tracking_id_size)
+
     {
       token,
       %UserToken{
         token: token,
         tracking_id: tracking_id,
         context: "session",
-        user_id: user.id,
+        user_id: user.id
       }
     }
   end
@@ -154,9 +155,15 @@ defmodule Nimble.UserToken do
   @doc """
   Returns all session tokens except the given session token.
   """
-  def user_and_other_session_tokens(user, token) do
+  def user_and_session_tokens(user, token) do
     from(t in UserToken,
       where: t.token != ^token and t.user_id == ^user.id and t.context == "session"
+    )
+  end
+
+  def user_and_session_tokens(user) do
+    from(t in UserToken,
+      where: t.user_id == ^user.id and t.context == "session"
     )
   end
 

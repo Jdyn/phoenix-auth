@@ -27,7 +27,7 @@ defmodule Nimble.UserController do
   def show_sessions(conn, _params) do
     current_user = conn.assigns[:current_user]
 
-    tokens = Identity.find_all(current_user)
+    tokens = Identity.find_all_sessions(current_user)
 
     conn
     |> put_status(:ok)
@@ -73,9 +73,8 @@ defmodule Nimble.UserController do
   to avoid fixation attacks.
   """
   def sign_in(conn, %{"email" => email, "password" => password} = _params) do
-    # TODO: Add check to see if user is trying to sign in while simultaneously sending
-    # a valid session to server.. In that case no need to create new session
-    with {:ok, user} <- Identity.authenticate(email, password) do
+    with {:ok, user} <- Identity.authenticate(email, password),
+         nil <- get_session(conn, :user_token) do
       token = Identity.create_session_token(user)
 
       conn
@@ -85,6 +84,9 @@ defmodule Nimble.UserController do
       |> put_status(:ok)
       |> put_view(UserView)
       |> render("login.json", user: user)
+    else
+      _ ->
+        {:unauthorized, "You are already signed in."}
     end
   end
 
