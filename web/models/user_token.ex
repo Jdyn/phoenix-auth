@@ -12,8 +12,8 @@ defmodule Nimble.UserToken do
   @tracking_id_size 16
 
   @reset_password_validity_in_days 1
-  @confirm_validity_in_days 7
-  @change_email_validity_in_days 7
+  @confirm_validity_in_days 1
+  @change_email_validity_in_days 1
   @session_validity_in_days 60
 
   schema "users_tokens" do
@@ -155,15 +155,9 @@ defmodule Nimble.UserToken do
   @doc """
   Returns all session tokens except the given session token.
   """
-  def user_and_session_tokens(user, token) do
+  def user_and_session_tokens(%User{} = user, token) do
     from(t in UserToken,
       where: t.token != ^token and t.user_id == ^user.id and t.context == "session"
-    )
-  end
-
-  def user_and_session_tokens(user) do
-    from(t in UserToken,
-      where: t.user_id == ^user.id and t.context == "session"
     )
   end
 
@@ -175,10 +169,13 @@ defmodule Nimble.UserToken do
   end
 
   def user_and_contexts_query(user, [_ | _] = contexts) do
-    from(t in UserToken, where: t.user_id == ^user.id and t.context in ^contexts)
+    from(t in UserToken,
+      where: t.user_id == ^user.id and t.context in ^contexts,
+      order_by: [desc: t.inserted_at]
+    )
   end
 
   def user_and_tracking_id_query(user, tracking_id) do
-    from(t in UserToken, where: t.user_id == ^user.id and t.tracking_id == ^tracking_id, select: t)
+    from(t in UserToken, where: t.user_id == ^user.id and t.tracking_id == ^tracking_id)
   end
 end

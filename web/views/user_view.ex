@@ -6,7 +6,7 @@ defmodule Nimble.UserView do
   def render("show.json", %{user: user}) do
     %{
       ok: true,
-      result: %{
+      data: %{
         user: render_one(user, UserView, "user.json", as: :user)
       }
     }
@@ -15,7 +15,7 @@ defmodule Nimble.UserView do
   def render("login.json", %{user: user}) do
     %{
       ok: true,
-      result: %{
+      data: %{
         user: render_one(user, UserView, "user.json", as: :user)
       }
     }
@@ -39,7 +39,7 @@ defmodule Nimble.UserView do
   def render("sessions.json", %{tokens: tokens}) do
     %{
       ok: true,
-      result: %{
+      data: %{
         tokens: render_many(tokens, UserTokenView, "token.json", as: :token)
       }
     }
@@ -48,7 +48,7 @@ defmodule Nimble.UserView do
   def render("session.json", %{token: token}) do
     %{
       ok: true,
-      result: %{
+      data: %{
         token: render_one(token, UserTokenView, "token.json", as: :token)
       }
     }

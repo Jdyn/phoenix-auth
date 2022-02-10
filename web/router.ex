@@ -31,7 +31,7 @@ defmodule Nimble.Router do
     resources("/account", UserController, singleton: true, only: [:show]) do
       get("/sessions", UserController, :show_sessions)
       get("/confirm", UserController, :send_user_email_confirmation)
-      post("/confirm/:token", UserController, :user_email_confirmation)
+      post("/confirm/:token", UserController, :do_user_email_confirmation)
       delete("/sessions/clear", UserController, :delete_sessions)
       delete("/sessions/:tracking_id", UserController, :delete_session)
       delete("/signout", UserController, :sign_out)

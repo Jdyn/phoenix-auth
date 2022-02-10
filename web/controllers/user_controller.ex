@@ -1,11 +1,7 @@
 defmodule Nimble.UserController do
   use Nimble.Web, :controller
 
-  import Plug.Conn
-  import Phoenix.Controller
-
-  alias Nimble.{UserView}
-  alias Nimble.{Account, User}
+  alias Nimble.Users
 
   action_fallback(Nimble.ErrorController)
 
@@ -18,7 +14,6 @@ defmodule Nimble.UserController do
     token = get_session(conn, :user_token)
 
     conn
-    |> put_status(:ok)
     |> put_remember_token(token)
     |> configure_session(renew: true)
     |> render("show.json", user: conn.assigns[:current_user])
@@ -27,17 +22,14 @@ defmodule Nimble.UserController do
   def show_sessions(conn, _params) do
     current_user = conn.assigns[:current_user]
 
-    tokens = Account.find_all_sessions(current_user)
-
-    conn
-    |> put_status(:ok)
-    |> render("sessions.json", tokens: tokens)
+    tokens = Users.find_all_sessions(current_user)
+    render(conn, "sessions.json", tokens: tokens)
   end
 
   def delete_session(conn, %{"tracking_id" => tracking_id}) do
     current_user = conn.assigns[:current_user]
 
-    with :ok <- Account.delete_session_token(current_user, tracking_id) do
+    with :ok <- Users.delete_session_token(current_user, tracking_id) do
       render(conn, "ok.json")
     end
   end
@@ -45,7 +37,7 @@ defmodule Nimble.UserController do
   def delete_sessions(conn, _params) do
     current_user = conn.assigns[:current_user]
 
-    with :ok <- Account.delete_session_tokens(current_user, get_session(conn, :user_token)) do
+    with :ok <- Users.delete_session_tokens(current_user, get_session(conn, :user_token)) do
       render(conn, "ok.json")
     end
   end
@@ -55,8 +47,8 @@ defmodule Nimble.UserController do
   Generates a new User and populates the session
   """
   def sign_up(conn, params) do
-    with {:ok, user} <- Account.register(params) do
-      token = Account.create_session_token(user)
+    with {:ok, user} <- Users.register(params) do
+      token = Users.create_session_token(user)
 
       conn
       |> renew_session()
@@ -73,16 +65,14 @@ defmodule Nimble.UserController do
   to avoid fixation attacks.
   """
   def sign_in(conn, %{"email" => email, "password" => password} = _params) do
-    with {:ok, user} <- Account.authenticate(email, password),
+    with {:ok, user} <- Users.authenticate(email, password),
          nil <- get_session(conn, :user_token) do
-      token = Account.create_session_token(user)
+      token = Users.create_session_token(user)
 
       conn
       |> renew_session()
       |> put_session(:user_token, token)
       |> put_remember_token(token)
-      |> put_status(:ok)
-      |> put_view(UserView)
       |> render("login.json", user: user)
     else
       _ ->
@@ -96,14 +86,27 @@ defmodule Nimble.UserController do
   """
   def sign_out(conn, _params) do
     token = get_session(conn, :user_token)
-    token && Account.delete_session_token(token)
+    token && Users.delete_session_token(token)
 
     conn
     |> renew_session()
     |> delete_resp_cookie(@remember_me_cookie)
-    |> put_status(:ok)
-    |> put_view(UserView)
     |> render("ok.json")
+  end
+
+  def send_user_email_confirmation(conn, _params) do
+    current_user = conn.assigns[:current_user]
+
+    with user <- Users.get_user_by_email(current_user.email),
+         :ok <- Users.deliver_user_confirmation_instructions(user) do
+      render(conn, "ok.json")
+    end
+  end
+
+  def do_user_email_confirmation(conn, %{"token" => token}) do
+    with {:ok, _} <- Users.confirm_user(token) do
+      render(conn, "ok.json")
+    end
   end
 
   defp put_remember_token(conn, token) do
@@ -114,24 +117,5 @@ defmodule Nimble.UserController do
     conn
     |> configure_session(renew: true)
     |> clear_session()
-  end
-
-  def send_user_email_confirmation(conn, _params) do
-    current_user = conn.assigns[:current_user]
-
-    with %User{} = user <- Account.get_user_by_email(current_user.email),
-         :ok <- Account.deliver_user_confirmation_instructions(user) do
-      conn
-      |> put_status(:ok)
-      |> render("ok.json")
-    end
-  end
-
-  def user_email_confirmation(conn, %{"token" => token}) do
-    with {:ok, _} <- Account.confirm_user(token) do
-      conn
-      |> put_status(:ok)
-      |> render("ok.json")
-    end
   end
 end

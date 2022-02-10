@@ -1,19 +1,6 @@
-defmodule Nimble.Account do
+defmodule Nimble.Users do
   alias Nimble.Repo
   alias Nimble.{User, UserToken, UserNotifier}
-
-  @doc """
-  Retrieve a User by a parameter that exists on a %User{} struct.
-  ## Examples
-      iex> find_by(email: "test@test.com")
-      %User{}
-
-      iex> find_by(id: 105)
-      nil
-  """
-  def find_by(param) do
-    Repo.get_by(User, param)
-  end
 
   @doc """
   Retrieve a User by a given signed session token.
@@ -24,7 +11,7 @@ defmodule Nimble.Account do
   end
 
   def authenticate(email, password) when is_binary(email) and is_binary(password) do
-    with %User{} = user <- find_by(email: email),
+    with %User{} = user <- Repo.get_by(User, email: email),
          true <- User.valid_password?(user, password) do
       {:ok, user}
     else
@@ -51,6 +38,7 @@ defmodule Nimble.Account do
 
   @doc """
   Returns an `%Ecto.Changeset{}` for tracking user changes.
+
   ## Examples
       iex> change_user_registration(user)
       %Ecto.Changeset{data: %User{}}
@@ -61,6 +49,7 @@ defmodule Nimble.Account do
 
   @doc """
   Returns an `%Ecto.Changeset{}` for changing the user e-mail.
+
   ## Examples
       iex> change_email(user)
       %Ecto.Changeset{data: %User{}}
@@ -72,6 +61,7 @@ defmodule Nimble.Account do
   @doc """
   Emulates that the e-mail will change without actually changing
   it in the database.
+
   ## Examples
       iex> apply_user_email(user, "valid password", %{email: ...})
       {:ok, %User{}}
@@ -113,6 +103,7 @@ defmodule Nimble.Account do
 
   @doc """
   Returns an `%Ecto.Changeset{}` for changing the user password.
+
   ## Examples
       iex> change_user_password(user)
       %Ecto.Changeset{data: %User{}}
@@ -123,6 +114,7 @@ defmodule Nimble.Account do
 
   @doc """
   Updates the user password.
+
   ## Examples
       iex> update_user_password(user, "valid password", %{password: ...})
       {:ok, %User{}}
@@ -170,10 +162,9 @@ defmodule Nimble.Account do
     |> Ecto.Multi.delete_all(:tokens, UserToken.user_and_contexts_query(user, ["confirm"]))
   end
 
-  ## Reset password
-
   @doc """
   Gets the user by reset password token.
+
   ## Examples
       iex> get_user_by_reset_password_token("validtoken")
       %User{}
@@ -191,6 +182,7 @@ defmodule Nimble.Account do
 
   @doc """
   Gets a user by email.
+
   ## Examples
       iex> get_user_by_email("foo@example.com")
       %User{}
@@ -201,6 +193,7 @@ defmodule Nimble.Account do
 
   @doc """
   Resets the user password.
+
   ## Examples
       iex> reset_user_password(user, %{password: "new long password", password_confirmation: "new long password"})
       {:ok, %User{}}
@@ -220,6 +213,7 @@ defmodule Nimble.Account do
 
   @doc """
   Delivers the confirmation email instructions to the given user.
+
   ## Examples
       iex> deliver_user_confirmation_instructions(user, &Routes.user_confirmation_url(conn, :edit, &1))
       {:ok, %{to: ..., body: ...}}
@@ -274,13 +268,6 @@ defmodule Nimble.Account do
   @doc """
   Returns all tokens for the given user.
   """
-  def find_all(user) do
-    UserToken.user_and_contexts_query(user, :all)
-    |> Repo.all()
-  end
-
-  def find_all_sessions(user) do
-    UserToken.user_and_session_tokens(user)
-    |> Repo.all()
-  end
+  def find_all(user), do: Repo.all(UserToken.user_and_contexts_query(user, :all))
+  def find_all_sessions(user), do: Repo.all(UserToken.user_and_contexts_query(user, ["session"]))
 end
