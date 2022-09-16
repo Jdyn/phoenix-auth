@@ -5,7 +5,7 @@ defmodule Nimble.MixProject do
     [
       app: :nimble,
       version: "0.1.0",
-      elixir: "~> 1.13.1",
+      elixir: "~> 1.14.0",
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: [:phoenix] ++ Mix.compilers(),
       start_permanent: Mix.env() == :prod,
@@ -31,17 +31,17 @@ defmodule Nimble.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
-      {:phoenix, "~> 1.6.6"},
-      {:phoenix_ecto, "~> 4.2.1"},
-      {:ecto_sql, "~> 3.6.1"},
-      {:postgrex, "~> 0.15.0"},
-      {:swoosh, "~> 1.3"},
+      {:phoenix, "~> 1.6.12"},
+      {:phoenix_ecto, "~> 4.4.0"},
+      {:ecto_sql, "~> 3.8.3"},
+      {:postgrex, "~> 0.16.4"},
+      {:swoosh, "~> 1.8"},
       {:telemetry_metrics, "~> 0.4.0"},
       {:telemetry_poller, "~> 0.4.0"},
-      {:jason, "~> 1.2.1"},
-      {:cors_plug, "~> 2.0"},
+      {:jason, "~> 1.4.0"},
+      {:cors_plug, "~> 3.0.3"},
       {:pbkdf2_elixir, "~> 2.0.0"},
-      {:plug_cowboy, "~> 2.3.0"}
+      {:plug_cowboy, "~> 2.5.2"}
     ]
   end
 

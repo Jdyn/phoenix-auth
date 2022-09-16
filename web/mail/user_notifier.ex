@@ -3,12 +3,15 @@ defmodule Nimble.UserNotifier do
 
   alias Nimble.Mailer
 
+  @delivery_name "Nimble"
+  @delivery_email "no-reply@nimble.com"
+
   # Delivers the email using the application mailer.
   defp deliver(recipient, subject, body) do
     email =
       new()
       |> to(recipient)
-      |> from({"Nimble", "no-reply@nimble.com"})
+      |> from({@delivery_name, @delivery_email})
       |> subject(subject)
       |> html_body(body)
 
