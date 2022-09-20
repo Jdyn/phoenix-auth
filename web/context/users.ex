@@ -241,19 +241,27 @@ defmodule Nimble.Users do
   end
 
   @doc """
-  Deletes the current session token.
+  Deletes the current session token without validation.
   """
   def delete_session_token(token) do
     Repo.delete_all(UserToken.token_and_context_query(token, "session"))
     :ok
   end
 
-  def delete_session_token(%User{} = user, tracking_id) do
-    if _token = Repo.one(UserToken.user_and_tracking_id_query(user, tracking_id)) do
-      Repo.delete_all(UserToken.user_and_tracking_id_query(user, tracking_id))
+  @doc """
+  Deletes the current session token with validation.
+  """
+  def delete_session_token(%User{} = user, tracking_id, current_token) do
+    with %{token: token} <- find_session(user, tracking_id: tracking_id),
+         true <- token != current_token,
+         _ <- Repo.delete_all(UserToken.user_and_tracking_id_query(user, tracking_id)) do
       :ok
     else
-      {:not_found, "Session does not exist."}
+      false ->
+        {:not_found, "Cannot delete the current session."}
+
+      nil ->
+        {:unauthorized, "Session does not exist."}
     end
   end
 
@@ -262,7 +270,7 @@ defmodule Nimble.Users do
   """
   def delete_session_tokens(%User{} = user, token) do
     Repo.delete_all(UserToken.user_and_session_tokens(user, token))
-    :ok
+    find_session(user, token: token)
   end
 
   @doc """
@@ -270,4 +278,12 @@ defmodule Nimble.Users do
   """
   def find_all(user), do: Repo.all(UserToken.user_and_contexts_query(user, :all))
   def find_all_sessions(user), do: Repo.all(UserToken.user_and_contexts_query(user, ["session"]))
+
+  def find_session(user, tracking_id: id) do
+    Repo.one(UserToken.user_and_tracking_id_query(user, id))
+  end
+
+  def find_session(user = %User{}, token: token) do
+    Repo.one(UserToken.user_and_token_query(user, token))
+  end
 end

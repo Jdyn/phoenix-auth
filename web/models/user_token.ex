@@ -175,7 +175,11 @@ defmodule Nimble.UserToken do
     )
   end
 
-  def user_and_tracking_id_query(user, tracking_id) do
-    from(t in UserToken, where: t.user_id == ^user.id and t.tracking_id == ^tracking_id)
+  def user_and_tracking_id_query(%{id: id} = %User{}, tracking_id) do
+    from(t in UserToken, where: t.user_id == ^id and t.tracking_id == ^tracking_id)
+  end
+
+  def user_and_token_query(%{id: id} = %User{}, token) do
+    from(t in UserToken, where: t.user_id == ^id and t.token == ^token)
   end
 end

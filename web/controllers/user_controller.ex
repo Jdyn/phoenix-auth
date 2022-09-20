@@ -26,19 +26,24 @@ defmodule Nimble.UserController do
     render(conn, "sessions.json", tokens: tokens)
   end
 
+  @doc """
+  Deletes a session associated with a user.
+  """
   def delete_session(conn, %{"tracking_id" => tracking_id}) do
-    current_user = conn.assigns[:current_user]
+    user = conn.assigns[:current_user]
+    token = get_session(conn, :user_token)
 
-    with :ok <- Users.delete_session_token(current_user, tracking_id) do
+    with :ok <- Users.delete_session_token(user, tracking_id, token) do
       render(conn, "ok.json")
     end
   end
 
   def delete_sessions(conn, _params) do
-    current_user = conn.assigns[:current_user]
+    user = conn.assigns[:current_user]
+    token = get_session(conn, :user_token)
 
-    with :ok <- Users.delete_session_tokens(current_user, get_session(conn, :user_token)) do
-      render(conn, "ok.json")
+    with token <- Users.delete_session_tokens(user, token) do
+      render(conn, "sessions.json", tokens: [token])
     end
   end
 
