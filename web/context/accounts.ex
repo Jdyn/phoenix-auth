@@ -1,14 +1,6 @@
-defmodule Nimble.Users do
+defmodule Nimble.Accounts do
   alias Nimble.Repo
   alias Nimble.{User, UserToken, UserNotifier}
-
-  @doc """
-  Retrieve a User by a given signed session token.
-  """
-  def find_by_session_token(token) do
-    {:ok, query} = UserToken.verify_session_token_query(token)
-    Repo.one(query)
-  end
 
   def authenticate(email, password) when is_binary(email) and is_binary(password) do
     with %User{} = user <- Repo.get_by(User, email: email),
@@ -21,9 +13,18 @@ defmodule Nimble.Users do
   end
 
   @doc """
+  Retrieve a User by a given signed session token.
+  """
+  def find_by_session_token(token) do
+    {:ok, query} = UserToken.verify_session_token_query(token)
+    Repo.one(query)
+  end
+
+  @doc """
   Registers a user.
 
   ## Examples
+
       iex> register_user(%{field: value})
       {:ok, %User{}}
 
@@ -40,6 +41,7 @@ defmodule Nimble.Users do
   Returns an `%Ecto.Changeset{}` for tracking user changes.
 
   ## Examples
+
       iex> change_user_registration(user)
       %Ecto.Changeset{data: %User{}}
   """
@@ -51,6 +53,7 @@ defmodule Nimble.Users do
   Returns an `%Ecto.Changeset{}` for changing the user e-mail.
 
   ## Examples
+
       iex> change_email(user)
       %Ecto.Changeset{data: %User{}}
   """
@@ -63,6 +66,7 @@ defmodule Nimble.Users do
   it in the database.
 
   ## Examples
+
       iex> apply_user_email(user, "valid password", %{email: ...})
       {:ok, %User{}}
 
@@ -105,6 +109,7 @@ defmodule Nimble.Users do
   Returns an `%Ecto.Changeset{}` for changing the user password.
 
   ## Examples
+
       iex> change_user_password(user)
       %Ecto.Changeset{data: %User{}}
   """
@@ -145,7 +150,7 @@ defmodule Nimble.Users do
   If the token matches, the user account is marked as confirmed
   and the token is deleted.
   """
-  def confirm_user(token) do
+  def confirm_user_email(token) do
     with {:ok, query} <- UserToken.verify_email_token_query(token, "confirm"),
          %User{} = user <- Repo.one(query),
          {:ok, %{user: user}} <- Repo.transaction(confirm_user_multi(user)) do
