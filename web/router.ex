@@ -12,8 +12,8 @@ defmodule Nimble.Router do
     plug(Nimble.Auth.EnsureAuth)
   end
 
-  if Mix.env == :dev do
-    forward "/mailbox", Plug.Swoosh.MailboxPreview
+  if Mix.env() == :dev do
+    forward("/mailbox", Plug.Swoosh.MailboxPreview)
   end
 
   scope "/api", Nimble do
@@ -22,6 +22,8 @@ defmodule Nimble.Router do
     resources("/account", UserController, singleton: true, only: []) do
       post("/signup", UserController, :sign_up)
       post("/signin", UserController, :sign_in)
+      get("/oauth/:provider/request", UserController, :provider_request)
+      get("/oauth/:provider/callback", UserController, :provider_callback)
     end
   end
 

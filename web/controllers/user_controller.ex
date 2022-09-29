@@ -2,7 +2,6 @@ defmodule Nimble.UserController do
   use Nimble.Web, :controller
 
   alias Nimble.Accounts
-  alias Nimble.Auth.{Google}
 
   action_fallback(Nimble.ErrorController)
 
@@ -98,6 +97,11 @@ defmodule Nimble.UserController do
     |> renew_session()
     |> delete_resp_cookie(@remember_me_cookie)
     |> render("ok.json")
+  end
+
+  def provider_request(conn, %{"provider" => provider}) do
+    {:ok, %{url: url} = _args} = Nimble.Auth.OIDProvider.request(String.to_atom(provider))
+    render(conn, "get_provider.json", url: url)
   end
 
   def send_user_email_confirmation(conn, _params) do

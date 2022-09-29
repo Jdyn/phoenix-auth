@@ -53,4 +53,13 @@ defmodule Nimble.UserView do
       }
     }
   end
+
+  def render("get_provider.json", %{url: url}) do
+    %{
+      ok: true,
+      data: %{
+        url: url,
+      }
+    }
+  end
 end

@@ -36,6 +36,7 @@ defmodule Nimble.MixProject do
       {:ecto_sql, "~> 3.8.3"},
       {:postgrex, "~> 0.16.4"},
       {:swoosh, "~> 1.8"},
+      {:assent, "~> 0.2.1"},
       {:telemetry_metrics, "~> 0.4.0"},
       {:telemetry_poller, "~> 0.4.0"},
       {:jason, "~> 1.4.0"},

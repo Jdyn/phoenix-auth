@@ -14,6 +14,8 @@ defmodule Nimble.User do
     field(:role, :string, default: "user")
     field(:avatar, :string)
 
+    field(:phone, :string)
+
     field(:password_hash, :string)
     field(:password, :string, virtual: true)
 
@@ -109,6 +111,7 @@ defmodule Nimble.User do
       when is_binary(password_hash) and byte_size(password) > 0 do
         Pbkdf2.verify_pass(password, password_hash)
   end
+
   def valid_password?(_, _), do: Pbkdf2.no_user_verify()
 
   @doc """

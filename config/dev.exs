@@ -25,6 +25,18 @@ config :nimble, Nimble.Endpoint,
 config :nimble, Nibmle.Mailer, adapter: Swoosh.Adapters.Local
 config :swoosh, :api_client, false
 
+config :nimble, :strategies,
+  github: [
+    client_id: "REPLACE_WITH_CLIENT_ID",
+    client_secret: "REPLACE_WITH_CLIENT_SECRET",
+    strategy: Assent.Strategy.Github
+  ],
+  google: [
+    client_id: "405268503410-jl07d9kvkn8dhg88ndsl58qvglfsp9pu.apps.googleusercontent.com",
+    client_secret: "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T",
+    strategy: Assent.Strategy.Google
+  ]
+
 # ## SSL Support
 #
 # In order to use HTTPS in development, a self-signed
