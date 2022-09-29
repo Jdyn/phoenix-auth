@@ -111,7 +111,7 @@ defmodule Nimble.UserController do
 
     case OIDProvider.callback(provider, params) do
       {:ok, %{user: claims, token: _token} = _args} ->
-        if user = Accounts.get_user_by_email(claims.email) do
+        if user = Accounts.get_user_by_email(claims["email"]) do
           render(conn, "login.json", user: user)
         else
           user = Accounts.register(claims)
