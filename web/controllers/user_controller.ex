@@ -1,7 +1,8 @@
 defmodule Nimble.UserController do
   use Nimble.Web, :controller
 
-  alias Nimble.Accounts
+  alias Nimble.{Accounts, User}
+  alias Nimble.Auth.OIDProvider
 
   action_fallback(Nimble.ErrorController)
 
@@ -100,8 +101,25 @@ defmodule Nimble.UserController do
   end
 
   def provider_request(conn, %{"provider" => provider}) do
-    {:ok, %{url: url} = _args} = Nimble.Auth.OIDProvider.request(String.to_atom(provider))
-    render(conn, "get_provider.json", url: url)
+    with {:ok, %{url: url, session_params: _}} <- OIDProvider.request(provider) do
+      render(conn, "get_provider.json", url: url)
+    end
+  end
+
+  def provider_callback(conn, %{"provider" => provider} = params) do
+    dbg(params)
+
+    case OIDProvider.callback(provider, params) do
+      {:ok, %{user: claims, token: _token} = _args} ->
+        if user = Accounts.get_user_by_email(claims.email) do
+          render(conn, "login.json", user: user)
+        else
+          user = Accounts.register(claims)
+        end
+
+      {:error, %Assent.RequestError{} = error} ->
+        {:not_found, error.message}
+    end
   end
 
   def send_user_email_confirmation(conn, _params) do

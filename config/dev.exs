@@ -33,8 +33,12 @@ config :nimble, :strategies,
   ],
   google: [
     client_id: "405268503410-jl07d9kvkn8dhg88ndsl58qvglfsp9pu.apps.googleusercontent.com",
-    client_secret: "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T",
-    strategy: Assent.Strategy.Google
+    client_secret: "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",
+    strategy: Assent.Strategy.Google,
+    authorization_params: [
+      access_type: "offline",
+      scope: "https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile"
+    ]
   ]
 
 # ## SSL Support

@@ -9,6 +9,8 @@ defmodule Nimble.Repo.Migrations.CreateUsers do
       add(:role, :string, default: "user")
       add(:avatar, :string)
 
+      add(:phone, :string)
+
       add(:password_hash, :string, null: false)
       add(:confirmed_at, :naive_datetime)
 

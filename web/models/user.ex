@@ -38,7 +38,7 @@ defmodule Nimble.User do
   def registration_changeset(%User{} = user, attrs) do
     user
     |> cast(attrs, [:email, :password, :first_name, :last_name])
-    |> validate_required([:first_name, :last_name])
+    |> validate_required([:email, :first_name, :last_name])
     |> validate_email()
     |> validate_password()
   end
@@ -59,15 +59,17 @@ defmodule Nimble.User do
     |> validate_format(:password, ~r/[a-z]/, message: "at least one lower case character")
     |> validate_format(:password, ~r/[A-Z]/, message: "at least one upper case character")
     |> validate_format(:password, ~r/[!?@#$%^&*_0-9]/, message: "at least one digit or punctuation character")
-    |> prepare_changes(&hash_password/1)
+    |> prepare_changes(&maybe_hash_password/1)
   end
 
-  defp hash_password(changeset) do
-    password = get_change(changeset, :password)
-
-    changeset
-    |> change(Pbkdf2.add_hash(password))
-    |> delete_change(:password)
+  defp maybe_hash_password(changeset) do
+    if password = get_change(changeset, :password) do
+      changeset
+      |> put_change(:password_hash, Pbkdf2.hash_pwd_salt(password))
+      |> delete_change(:password)
+    else
+      changeset
+    end
   end
 
   @doc """
