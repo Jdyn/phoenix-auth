@@ -1,6 +1,7 @@
 defmodule Nimble.Accounts do
   alias Nimble.Repo
   alias Nimble.{User, UserToken, UserNotifier}
+  alias Nimble.Auth.OAuth
 
   def authenticate(email, password) when is_binary(email) and is_binary(password) do
     with %User{} = user <- Repo.get_by(User, email: email),
@@ -9,6 +10,26 @@ defmodule Nimble.Accounts do
     else
       _ ->
         {:unauthorized, "Email or Password is incorrect."}
+    end
+  end
+
+  def authenticate(provider, params = %{}) when is_binary(provider) and is_map(params) do
+    case OAuth.callback(provider, params) do
+      {:ok, %{user: open_user, token: open_token}} ->
+        with user = %User{} <- Repo.get_by(User, email: open_user["email"]),
+             false <- is_nil(user.confirmed_at) do
+          {:ok, user}
+        else
+          true ->
+            {:not_found, "Confirm your email before signing in with #{provider}."}
+
+          nil ->
+            user = oauth_register(open_user, open_token)
+            {:ok, user}
+        end
+
+      error ->
+        error
     end
   end
 
@@ -35,6 +56,27 @@ defmodule Nimble.Accounts do
     %User{}
     |> User.registration_changeset(attrs)
     |> Repo.insert()
+  end
+
+  @doc """
+  Registers a user using OpenID Connect.
+  """
+  def oauth_register(attrs, _token) do
+    attrs = user_from_oauth(attrs)
+
+    %User{}
+    |> User.oauth_registration_changeset(attrs)
+    |> Repo.insert()
+  end
+
+  defp user_from_oauth(attrs) do
+    %{
+      email: attrs["email"],
+      email_verified: attrs["email_verified"],
+      first_name: attrs["given_name"],
+      last_name: attrs["family_name"],
+      avatar: attrs["picture"]
+    }
   end
 
   @doc """
@@ -165,7 +207,10 @@ defmodule Nimble.Accounts do
   defp confirm_user_multi(user) do
     Ecto.Multi.new()
     |> Ecto.Multi.update(:user, User.confirm_changeset(user))
-    |> Ecto.Multi.delete_all(:tokens, UserToken.user_and_contexts_query(user, ["confirm"]))
+    |> Ecto.Multi.delete_all(
+      :tokens,
+      UserToken.user_and_contexts_query(user, ["confirm"]) |> Ecto.Query.exclude(:order_by)
+    )
   end
 
   @doc """

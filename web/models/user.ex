@@ -7,6 +7,8 @@ defmodule Nimble.User do
 
   alias Nimble.{User, UserToken}
 
+  @registration_fields ~w(email first_name last_name)a
+
   schema "users" do
     field(:email, :string)
     field(:first_name, :string)
@@ -37,10 +39,17 @@ defmodule Nimble.User do
   """
   def registration_changeset(%User{} = user, attrs) do
     user
-    |> cast(attrs, [:email, :password, :first_name, :last_name])
-    |> validate_required([:email, :first_name, :last_name])
+    |> cast(attrs, @registration_fields ++ [:password])
+    |> validate_required(@registration_fields ++ [:password])
     |> validate_email()
     |> validate_password()
+  end
+
+  def oauth_registration_changeset(%User{} = user, attrs) do
+    user
+    |> cast(attrs, @registration_fields)
+    |> validate_required(@registration_fields)
+    |> confirm_oauth_email(attrs.email_verified)
   end
 
   defp validate_email(changeset) do
@@ -58,7 +67,9 @@ defmodule Nimble.User do
     |> validate_length(:password, min: 8, max: 80)
     |> validate_format(:password, ~r/[a-z]/, message: "at least one lower case character")
     |> validate_format(:password, ~r/[A-Z]/, message: "at least one upper case character")
-    |> validate_format(:password, ~r/[!?@#$%^&*_0-9]/, message: "at least one digit or punctuation character")
+    |> validate_format(:password, ~r/[!?@#$%^&*_0-9]/,
+      message: "at least one digit or punctuation character"
+    )
     |> prepare_changes(&maybe_hash_password/1)
   end
 
@@ -104,6 +115,14 @@ defmodule Nimble.User do
     change(user, confirmed_at: now)
   end
 
+  def confirm_oauth_email(changeset, true) do
+    now = NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second)
+    change(changeset, confirmed_at: now)
+  end
+
+  def confirm_oauth_email(changeset, false),
+    do: add_error(changeset, :email_verified, "Email not verified")
+
   @doc """
   Verifies the password.
   If there is no user or the user doesn't have a password, we call
@@ -111,7 +130,7 @@ defmodule Nimble.User do
   """
   def valid_password?(%User{password_hash: password_hash}, password)
       when is_binary(password_hash) and byte_size(password) > 0 do
-        Pbkdf2.verify_pass(password, password_hash)
+    Pbkdf2.verify_pass(password, password_hash)
   end
 
   def valid_password?(_, _), do: Pbkdf2.no_user_verify()

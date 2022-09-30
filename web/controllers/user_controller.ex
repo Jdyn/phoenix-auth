@@ -1,8 +1,8 @@
 defmodule Nimble.UserController do
   use Nimble.Web, :controller
 
-  alias Nimble.{Accounts, User}
-  alias Nimble.Auth.OIDProvider
+  alias Nimble.{Accounts}
+  alias Nimble.Auth.OAuth
 
   action_fallback(Nimble.ErrorController)
 
@@ -101,24 +101,24 @@ defmodule Nimble.UserController do
   end
 
   def provider_request(conn, %{"provider" => provider}) do
-    with {:ok, %{url: url, session_params: _}} <- OIDProvider.request(provider) do
+    with {:ok, %{url: url, session_params: _}} <- OAuth.request(provider) do
       render(conn, "get_provider.json", url: url)
     end
   end
 
   def provider_callback(conn, %{"provider" => provider} = params) do
-    dbg(params)
+    with {:ok, user} <- Accounts.authenticate(provider, params) do
+      token = get_session(conn, :user_token)
+      token && Accounts.delete_session_token(token)
 
-    case OIDProvider.callback(provider, params) do
-      {:ok, %{user: claims, token: _token} = _args} ->
-        if user = Accounts.get_user_by_email(claims["email"]) do
-          render(conn, "login.json", user: user)
-        else
-          user = Accounts.register(claims)
-        end
+      token = Accounts.create_session_token(user)
 
-      {:error, %Assent.RequestError{} = error} ->
-        {:not_found, error.message}
+      conn
+      |> renew_session()
+      |> put_session(:user_token, token)
+      |> put_remember_token(token)
+      |> put_status(:created)
+      |> render("show.json", user: user)
     end
   end
 

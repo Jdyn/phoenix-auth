@@ -21,4 +21,11 @@ defmodule Nimble.ErrorController do
     |> put_view(Nimble.ErrorView)
     |> render("error.json", error: reason)
   end
+
+  def call(conn, {:error, %Assent.RequestError{} = error}) do
+    conn
+    |> put_status(:unauthorized)
+    |> put_view(Nimble.ErrorView)
+    |> render("error.json", error: error.message)
+  end
 end

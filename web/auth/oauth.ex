@@ -1,4 +1,4 @@
-defmodule Nimble.Auth.OIDProvider do
+defmodule Nimble.Auth.OAuth do
   alias Assent.Config
 
   def request(provider) do

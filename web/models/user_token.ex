@@ -47,19 +47,6 @@ defmodule Nimble.UserToken do
     }
   end
 
-  def build_OID_session_token(user, token) do
-    tracking_id = build_tracking_id(@tracking_id_size)
-
-    {
-      token,
-      %UserToken{
-        token: token,
-        tracking_id: tracking_id,
-        context: "session",
-        user_id: user.id
-      }
-    }
-  end
 
   @doc """
   Checks if the token is valid and returns its underlying lookup query.

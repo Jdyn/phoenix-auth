@@ -11,7 +11,7 @@ defmodule Nimble.Repo.Migrations.CreateUsers do
 
       add(:phone, :string)
 
-      add(:password_hash, :string, null: false)
+      add(:password_hash, :string, null: true)
       add(:confirmed_at, :naive_datetime)
 
       add(:is_admin, :boolean, default: false, null: false)
