@@ -23,7 +23,12 @@ defmodule Nimble.Auth.OAuth do
   end
 
   defp config(provider) do
-    Application.get_env(:nimble, :strategies)[String.to_existing_atom(provider)]
+    try do
+      Application.get_env(:nimble, :strategies)[String.to_existing_atom(provider)]
+    rescue
+      ArgumentError ->
+        nil
+    end
   end
 
   defp build_uri(provider) do

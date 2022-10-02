@@ -81,8 +81,11 @@ defmodule Nimble.UserController do
       |> put_remember_token(token)
       |> render("login.json", user: user)
     else
-      _ ->
+      nil ->
         {:unauthorized, "You are already signed in."}
+
+      error ->
+        error
     end
   end
 
