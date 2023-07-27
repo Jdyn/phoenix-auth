@@ -53,7 +53,7 @@ defmodule Nimble.UserController do
   Generates a new User and populates the session
   """
   def sign_up(conn, params) do
-    with {:ok, user} <- Accounts.register(params) do
+    with {:ok, user} <- Accounts.register(params, :default) do
       token = Accounts.create_session_token(user)
 
       conn

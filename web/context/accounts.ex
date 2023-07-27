@@ -15,7 +15,7 @@ defmodule Nimble.Accounts do
 
   def authenticate(provider, params = %{}) when is_binary(provider) and is_map(params) do
     case OAuth.callback(provider, params) do
-      {:ok, %{user: open_user, token: open_token}} ->
+      {:ok, %{user: open_user, token: _open_token}} ->
         with user = %User{} <- Repo.get_by(User, email: open_user["email"]),
              false <- is_nil(user.confirmed_at) do
           {:ok, user}
@@ -24,8 +24,7 @@ defmodule Nimble.Accounts do
             {:not_found, "Confirm your email before signing in with #{provider}."}
 
           nil ->
-            user = oauth_register(open_user, open_token)
-            {:ok, user}
+            register(open_user, :oauth)
         end
 
       error ->
@@ -46,22 +45,19 @@ defmodule Nimble.Accounts do
 
   ## Examples
 
-    iex> register_user(%{field: value})
+    iex> register(%{field: value}, :default)
     {:ok, %User{}}
 
-    iex> register_user(%{field: bad_value})
+    iex> register(%{field: bad_value}, :default)
     {:error, %Ecto.Changeset{}}
   """
-  def register(attrs) do
+  def register(attrs, :default) do
     %User{}
     |> User.registration_changeset(attrs)
     |> Repo.insert()
   end
 
-  @doc """
-  Registers a user using OpenID Connect.
-  """
-  def oauth_register(attrs, _token) do
+  def register(attrs, :oauth) do
     attrs = user_from_oauth(attrs)
 
     %User{}
