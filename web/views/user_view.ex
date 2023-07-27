@@ -1,7 +1,8 @@
 defmodule Nimble.UserView do
   use Nimble.Web, :view
 
-  alias Nimble.{UserView, UserTokenView}
+  alias Nimble.UserTokenView
+  alias Nimble.UserView
 
   def render("show.json", %{user: user}) do
     %{
@@ -59,7 +60,7 @@ defmodule Nimble.UserView do
     %{
       ok: true,
       data: %{
-        url: url,
+        url: url
       }
     }
   end

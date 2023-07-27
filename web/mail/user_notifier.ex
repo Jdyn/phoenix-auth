@@ -1,4 +1,5 @@
 defmodule Nimble.UserNotifier do
+  @moduledoc false
   import Swoosh.Email
 
   alias Nimble.Mailer

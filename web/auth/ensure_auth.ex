@@ -1,6 +1,8 @@
 defmodule Nimble.Auth.EnsureAuth do
-  import Plug.Conn
+  @moduledoc false
   use Phoenix.Controller
+
+  import Plug.Conn
 
   alias Nimble.ErrorView
 

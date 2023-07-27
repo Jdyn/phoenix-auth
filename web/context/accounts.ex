@@ -1,7 +1,10 @@
 defmodule Nimble.Accounts do
-  alias Nimble.Repo
-  alias Nimble.{User, UserToken, UserNotifier}
+  @moduledoc false
   alias Nimble.Auth.OAuth
+  alias Nimble.Repo
+  alias Nimble.User
+  alias Nimble.UserNotifier
+  alias Nimble.UserToken
 
   def authenticate(email, password) when is_binary(email) and is_binary(password) do
     with %User{} = user <- Repo.get_by(User, email: email),
@@ -13,7 +16,7 @@ defmodule Nimble.Accounts do
     end
   end
 
-  def authenticate(provider, params = %{}) when is_binary(provider) and is_map(params) do
+  def authenticate(provider, %{} = params) when is_binary(provider) and is_map(params) do
     case OAuth.callback(provider, params) do
       {:ok, %{user: open_user, token: _open_token}} ->
         with user = %User{} <- Repo.get_by(User, email: open_user["email"]),
@@ -205,7 +208,7 @@ defmodule Nimble.Accounts do
     |> Ecto.Multi.update(:user, User.confirm_changeset(user))
     |> Ecto.Multi.delete_all(
       :tokens,
-      UserToken.user_and_contexts_query(user, ["confirm"]) |> Ecto.Query.exclude(:order_by)
+      user |> UserToken.user_and_contexts_query(["confirm"]) |> Ecto.Query.exclude(:order_by)
     )
   end
 
@@ -338,7 +341,7 @@ defmodule Nimble.Accounts do
     Repo.one(UserToken.user_and_tracking_id_query(user, id))
   end
 
-  def find_session(user = %User{}, token: token) do
+  def find_session(%User{} = user, token: token) do
     Repo.one(UserToken.user_and_token_query(user, token))
   end
 end

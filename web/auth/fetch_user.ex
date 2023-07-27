@@ -1,6 +1,8 @@
 defmodule Nimble.Auth.FetchUser do
-  import Plug.Conn
+  @moduledoc false
   use Phoenix.Controller
+
+  import Plug.Conn
 
   alias Nimble.Accounts
 
@@ -20,7 +22,7 @@ defmodule Nimble.Auth.FetchUser do
 
   defp ensure_user_token(conn) do
     if user_token = get_session(conn, :user_token) do
-        {user_token, conn}
+      {user_token, conn}
     else
       conn = fetch_cookies(conn, signed: [@remember_me_cookie])
 

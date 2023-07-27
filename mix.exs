@@ -5,7 +5,7 @@ defmodule Nimble.MixProject do
     [
       app: :nimble,
       version: "0.1.0",
-      elixir: "~> 1.14.0",
+      elixir: "~> 1.15.4",
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: [:phoenix] ++ Mix.compilers(),
       start_permanent: Mix.env() == :prod,
@@ -39,6 +39,7 @@ defmodule Nimble.MixProject do
       {:assent, "~> 0.2.1"},
       {:telemetry_metrics, "~> 0.4.0"},
       {:telemetry_poller, "~> 0.4.0"},
+      {:styler, "~> 0.8.1", only: [:dev, :test], runtime: false},
       {:jason, "~> 1.4.0"},
       {:cors_plug, "~> 3.0.3"},
       {:pbkdf2_elixir, "~> 2.0.0"},

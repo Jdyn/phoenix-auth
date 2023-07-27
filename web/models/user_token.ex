@@ -3,9 +3,11 @@ defmodule Nimble.UserToken do
   Defines a UserToken for use with authenticating and verifying User operations
   """
   use Ecto.Schema
+
   import Ecto.Query
 
-  alias Nimble.{User, UserToken}
+  alias Nimble.User
+  alias Nimble.UserToken
 
   @hash_algorithm :sha256
   @rand_size 32
@@ -46,7 +48,6 @@ defmodule Nimble.UserToken do
       }
     }
   end
-
 
   @doc """
   Checks if the token is valid and returns its underlying lookup query.
@@ -93,7 +94,8 @@ defmodule Nimble.UserToken do
   end
 
   defp build_tracking_id(size) do
-    :crypto.strong_rand_bytes(size)
+    size
+    |> :crypto.strong_rand_bytes()
     |> Base.url_encode64(padding: false)
     |> binary_part(0, size)
   end

@@ -1,4 +1,5 @@
 defmodule Nimble.Auth.OAuth do
+  @moduledoc false
   alias Assent.Config
 
   def request(provider) do
@@ -13,7 +14,8 @@ defmodule Nimble.Auth.OAuth do
   def callback(provider, params, session_params \\ %{}) do
     if config = config(provider) do
       config =
-        Config.put(config, :session_params, session_params)
+        config
+        |> Config.put(:session_params, session_params)
         |> Config.put(:redirect_uri, build_uri(provider))
 
       config[:strategy].callback(config, params)
@@ -23,12 +25,10 @@ defmodule Nimble.Auth.OAuth do
   end
 
   defp config(provider) do
-    try do
-      Application.get_env(:nimble, :strategies)[String.to_existing_atom(provider)]
-    rescue
-      ArgumentError ->
-        nil
-    end
+    Application.get_env(:nimble, :strategies)[String.to_existing_atom(provider)]
+  rescue
+    ArgumentError ->
+      nil
   end
 
   defp build_uri(provider) do

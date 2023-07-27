@@ -1,10 +1,10 @@
 defmodule Nimble.Web do
-
+  @moduledoc false
   def view do
     quote do
+      import Nimble.ErrorHelpers
       import Phoenix.View
 
-      import Nimble.ErrorHelpers
       alias Nimble.Router.Helpers, as: Routes
     end
   end
@@ -15,8 +15,8 @@ defmodule Nimble.Web do
 
       import Ecto
       import Ecto.Changeset
-      import Ecto.Query
       import Ecto.Multi
+      import Ecto.Query
 
       @timestamps_opts [type: :utc_datetime]
     end
@@ -25,9 +25,10 @@ defmodule Nimble.Web do
   def controller do
     quote do
       use Phoenix.Controller, namespace: Nimble
-      import Ecto.Query
 
+      import Ecto.Query
       import Plug.Conn
+
       alias Nimble.Router.Helpers, as: Routes
     end
   end

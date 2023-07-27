@@ -5,7 +5,8 @@ defmodule Nimble.User do
 
   use Nimble.Web, :model
 
-  alias Nimble.{User, UserToken}
+  alias Nimble.User
+  alias Nimble.UserToken
 
   @registration_fields ~w(email first_name last_name)a
 
@@ -67,9 +68,7 @@ defmodule Nimble.User do
     |> validate_length(:password, min: 8, max: 80)
     |> validate_format(:password, ~r/[a-z]/, message: "at least one lower case character")
     |> validate_format(:password, ~r/[A-Z]/, message: "at least one upper case character")
-    |> validate_format(:password, ~r/[!?@#$%^&*_0-9]/,
-      message: "at least one digit or punctuation character"
-    )
+    |> validate_format(:password, ~r/[!?@#$%^&*_0-9]/, message: "at least one digit or punctuation character")
     |> prepare_changes(&maybe_hash_password/1)
   end
 
@@ -111,17 +110,16 @@ defmodule Nimble.User do
   Confirms the account by setting `confirmed_at`.
   """
   def confirm_changeset(user) do
-    now = NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second)
+    now = NaiveDateTime.truncate(NaiveDateTime.utc_now(), :second)
     change(user, confirmed_at: now)
   end
 
   def confirm_oauth_email(changeset, true) do
-    now = NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second)
+    now = NaiveDateTime.truncate(NaiveDateTime.utc_now(), :second)
     change(changeset, confirmed_at: now)
   end
 
-  def confirm_oauth_email(changeset, false),
-    do: add_error(changeset, :email_verified, "Email not verified")
+  def confirm_oauth_email(changeset, false), do: add_error(changeset, :email_verified, "Email not verified")
 
   @doc """
   Verifies the password.
