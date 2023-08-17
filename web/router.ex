@@ -12,9 +12,7 @@ defmodule Nimble.Router do
     plug(Nimble.Auth.EnsureAuth)
   end
 
-  if Mix.env() == :dev do
-    forward("/mailbox", Plug.Swoosh.MailboxPreview)
-  end
+  if Mix.env() == :dev, do: forward("/mailbox", Plug.Swoosh.MailboxPreview)
 
   scope "/api", Nimble do
     pipe_through([:api])

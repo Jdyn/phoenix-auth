@@ -35,7 +35,7 @@ defmodule Nimble.UserController do
     token = get_session(conn, :user_token)
 
     with :ok <- Accounts.delete_session_token(user, tracking_id, token) do
-      render(conn, %{ok: true})
+      json(conn, %{ok: true})
     end
   end
 
@@ -100,7 +100,7 @@ defmodule Nimble.UserController do
     conn
     |> renew_session()
     |> delete_resp_cookie(@remember_me_cookie)
-    |> render(%{ok: true})
+    |> json(%{ok: true})
   end
 
   def provider_request(conn, %{"provider" => provider}) do
@@ -130,13 +130,13 @@ defmodule Nimble.UserController do
 
     with user <- Accounts.get_user_by_email(current_user.email),
          :ok <- Accounts.deliver_user_confirmation_instructions(user) do
-      render(conn, %{ok: true})
+      json(conn, %{ok: true})
     end
   end
 
   def do_user_email_confirmation(conn, %{"token" => token}) do
     with {:ok, _} <- Accounts.confirm_user_email(token) do
-      render(conn, %{ok: true})
+      json(conn, %{ok: true})
     end
   end
 
