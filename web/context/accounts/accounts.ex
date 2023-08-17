@@ -21,7 +21,6 @@ defmodule Nimble.Accounts do
   def authenticate(provider, %{} = params) when is_binary(provider) and is_map(params) do
     case OAuth.callback(provider, params) do
       {:ok, %{user: open_user, token: _token}} ->
-
         with user = %User{} <- get_user_by_email(open_user["email"]),
              false <- is_nil(user.confirmed_at) do
           {:ok, user}
@@ -62,9 +61,8 @@ defmodule Nimble.Accounts do
   end
 
   def register(attrs, :oauth) do
-    %User{}
-    |> User.oauth_registration_changeset(user_from_oauth(attrs))
-    |> Repo.insert()
+    oauth_user = user_from_oauth(attrs)
+    %User{} |> User.oauth_registration_changeset(oauth_user) |> Repo.insert()
   end
 
   defp user_from_oauth(attrs) do
@@ -134,7 +132,7 @@ defmodule Nimble.Accounts do
   """
   def update_user_password(user, password, attrs) do
     user
-    |> user_password_multi(password, attrs)
+    |> update_user_password_multi(password, attrs)
     |> Repo.transaction()
     |> case do
       {:ok, %{user: user}} -> {:ok, user}
@@ -142,7 +140,7 @@ defmodule Nimble.Accounts do
     end
   end
 
-  defp user_password_multi(user, password, attrs) do
+  defp update_user_password_multi(user, password, attrs) do
     changeset =
       user
       |> User.password_changeset(attrs)
@@ -163,7 +161,7 @@ defmodule Nimble.Accounts do
   def confirm_user_email(token) do
     with {:ok, query} <- UserToken.verify_email_token_query(token, "confirm"),
          %User{} = user <- Repo.one(query),
-         {:ok, %{user: user}} <- Repo.transaction(confirm_user_multi(user)) do
+         {:ok, %{user: user}} <- Repo.transaction(confirm_user_email_multi(user)) do
       {:ok, user}
     else
       _ ->
@@ -171,12 +169,12 @@ defmodule Nimble.Accounts do
     end
   end
 
-  defp confirm_user_multi(%User{} = user) do
+  defp confirm_user_email_multi(%User{} = user) do
     Ecto.Multi.new()
     |> Ecto.Multi.update(:user, User.confirm_changeset(user))
-    |> Ecto.Multi.delete_all(
+    |> Ecto.Multi.deete_all(
       :tokens,
-      user |> Accounts.Query.user_and_contexts_query(["confirm"])
+      Accounts.Query.user_and_contexts_query(user, ["confirm"])
     )
   end
 
