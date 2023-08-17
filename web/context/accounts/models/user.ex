@@ -109,9 +109,9 @@ defmodule Nimble.User do
   @doc """
   Confirms the account by setting `confirmed_at`.
   """
-  def confirm_changeset(%User{} = user) do
+  def confirm_changeset(user_or_changeset) do
     now = NaiveDateTime.truncate(NaiveDateTime.utc_now(), :second)
-    change(user, confirmed_at: now)
+    change(user_or_changeset, confirmed_at: now)
   end
 
   def confirm_oauth_email(changeset, true) do

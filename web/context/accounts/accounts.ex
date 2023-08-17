@@ -214,7 +214,7 @@ defmodule Nimble.Accounts do
     end
   end
 
-  defp confirm_user_multi(user) do
+  defp confirm_user_multi(user = %User{}) do
     Ecto.Multi.new()
     |> Ecto.Multi.update(:user, User.confirm_changeset(user))
     |> Ecto.Multi.delete_all(
@@ -302,6 +302,10 @@ defmodule Nimble.Accounts do
 
   @doc """
   Generates a session token.
+
+  ## Examples
+      iex> create_session_token(user)
+      "%Token{ ... }"
   """
   def create_session_token(user) do
     {token, user_token} = UserToken.build_session_token(user)
@@ -310,7 +314,11 @@ defmodule Nimble.Accounts do
   end
 
   @doc """
-  Deletes the current session token without validation.
+  Deletes the current session token.
+
+  ## Examples
+      iex> delete_session_token(token)
+      :ok
   """
   def delete_session_token(token) do
     Repo.delete_all(Accounts.Query.token_and_context_query(token, "session"))
@@ -318,7 +326,14 @@ defmodule Nimble.Accounts do
   end
 
   @doc """
-  Deletes the current session token with validation.
+  Deletes the current session token IF the given token is not the current session token.
+
+  ## Examples
+      iex> delete_session_token(user, tracking_id, current_token)
+      :ok
+
+      iex> delete_session_token(user, tracking_id_of_current_token, current_token)
+      {:not_found, "Cannot delete the current session."}
   """
   def delete_session_token(%User{} = user, tracking_id, current_token) do
     with %{token: token} <- find_session(user, tracking_id: tracking_id),
