@@ -131,7 +131,7 @@ defmodule Nimble.UserController do
     current_user = conn.assigns[:current_user]
 
     with user <- Accounts.get_user_by_email(current_user.email),
-         :ok <- Accounts.deliver_user_confirmation_instructions(user) do
+         {:ok, _token} <- Accounts.deliver_user_confirmation_instructions(user) do
       json(conn, %{ok: true})
     end
   end
@@ -151,7 +151,7 @@ defmodule Nimble.UserController do
     current_user = conn.assigns[:current_user]
 
     with {:ok, prepared_user} <- Accounts.prepare_email_update(current_user, password, new_user),
-         :ok <- Accounts.deliver_user_update_email_instructions(prepared_user, current_user.email) do
+         {:ok, _encoded_token} <- Accounts.deliver_user_update_email_instructions(prepared_user, current_user.email) do
       json(conn, %{data: "A link to confirm your email change has been sent to the new address."})
     end
   end

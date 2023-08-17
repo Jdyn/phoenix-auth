@@ -97,10 +97,8 @@ defmodule Nimble.AccountsTest do
     end
 
     test "sends token through notification", %{user: user} do
-      token =
-        extract_user_token_from_email(fn url ->
-          Accounts.deliver_user_update_email_instructions(user, "current@example.com")
-        end)
+      {:ok, token} =
+        Accounts.deliver_user_update_email_instructions(user, "current@example.com")
 
       {:ok, token} = Base.url_decode64(token, padding: false)
       assert user_token = Repo.get_by(UserToken, token: :crypto.hash(:sha256, token))
@@ -115,12 +113,10 @@ defmodule Nimble.AccountsTest do
       user = user_fixture()
       email = unique_user_email()
 
-      token =
-        extract_user_token_from_email(fn url ->
-          Accounts.deliver_user_update_email_instructions(%{user | email: email}, user.email)
-        end)
+      {:ok, token} =
+        Accounts.deliver_user_update_email_instructions(%{user | email: email}, user.email)
 
-      %{user: user, token: token, email: email}
+      %{user: user, token: token, email: email, error: {:not_found, "Invalid link. Please generate a new one."}}
     end
 
     test "updates the email with a valid token", %{user: user, token: token, email: email} do
@@ -133,21 +129,21 @@ defmodule Nimble.AccountsTest do
       refute Repo.get_by(UserToken, user_id: user.id)
     end
 
-    test "does not update email with invalid token", %{user: user} do
-      assert Accounts.update_user_email(user, "oops") == :error
+    test "does not update email with invalid token", %{user: user, error: error} do
+      assert Accounts.update_user_email(user, "oops") == error
       assert Repo.get!(User, user.id).email == user.email
       assert Repo.get_by(UserToken, user_id: user.id)
     end
 
-    test "does not update email if user email changed", %{user: user, token: token} do
-      assert Accounts.update_user_email(%{user | email: "current@example.com"}, token) == :error
+    test "does not update email if user email changed", %{user: user, token: token, error: error} do
+      assert Accounts.update_user_email(%{user | email: "current@example.com"}, token) == error
       assert Repo.get!(User, user.id).email == user.email
       assert Repo.get_by(UserToken, user_id: user.id)
     end
 
-    test "does not update email if token expired", %{user: user, token: token} do
+    test "does not update email if token expired", %{user: user, token: token, error: error} do
       {1, nil} = Repo.update_all(UserToken, set: [inserted_at: ~N[2020-01-01 00:00:00]])
-      assert Accounts.update_user_email(user, token) == :error
+      assert Accounts.update_user_email(user, token) == error
       assert Repo.get!(User, user.id).email == user.email
       assert Repo.get_by(UserToken, user_id: user.id)
     end
@@ -166,7 +162,11 @@ defmodule Nimble.AccountsTest do
         })
 
       assert %{
-               password: ["should be at least 12 character(s)"],
+               password: [
+                 "at least one digit or punctuation character",
+                 "at least one upper case character",
+                 "should be at least 12 character(s)"
+               ],
                password_confirmation: ["does not match password"]
              } = errors_on(changeset)
     end
@@ -177,7 +177,7 @@ defmodule Nimble.AccountsTest do
       {:error, changeset} =
         Accounts.update_user_password(user, valid_user_password(), %{password: too_long})
 
-      assert "should be at most 72 character(s)" in errors_on(changeset).password
+      assert "should be at most 80 character(s)" in errors_on(changeset).password
     end
 
     test "validates current password", %{user: user} do
@@ -190,32 +190,32 @@ defmodule Nimble.AccountsTest do
     test "updates the password", %{user: user} do
       {:ok, user} =
         Accounts.update_user_password(user, valid_user_password(), %{
-          password: "new valid password"
+          password: "New valid password 123"
         })
 
       assert is_nil(user.password)
-      assert Accounts.get_user_by_email_and_password(user.email, "new valid password")
+      assert Accounts.get_user_by_email_and_password(user.email, "New valid password 123")
     end
 
     test "deletes all tokens for the given user", %{user: user} do
-      _ = Accounts.generate_user_session_token(user)
+      _ = Accounts.create_session_token(user)
 
       {:ok, _} =
         Accounts.update_user_password(user, valid_user_password(), %{
-          password: "new valid password"
+          password: "New valid password 123"
         })
 
       refute Repo.get_by(UserToken, user_id: user.id)
     end
   end
 
-  describe "generate_user_session_token/1" do
+  describe "create_session_token/1" do
     setup do
       %{user: user_fixture()}
     end
 
     test "generates a token", %{user: user} do
-      token = Accounts.generate_user_session_token(user)
+      token = Accounts.create_session_token(user)
       assert user_token = Repo.get_by(UserToken, token: token)
       assert user_token.context == "session"
 
@@ -224,40 +224,41 @@ defmodule Nimble.AccountsTest do
         Repo.insert!(%UserToken{
           token: user_token.token,
           user_id: user_fixture().id,
-          context: "session"
+          context: "session",
+          tracking_id: "123"
         })
       end
     end
   end
 
-  describe "get_user_by_session_token/1" do
+  describe "find_by_session_token/1" do
     setup do
       user = user_fixture()
-      token = Accounts.generate_user_session_token(user)
+      token = Accounts.create_session_token(user)
       %{user: user, token: token}
     end
 
     test "returns user by token", %{user: user, token: token} do
-      assert session_user = Accounts.get_user_by_session_token(token)
+      assert session_user = Accounts.find_by_session_token(token)
       assert session_user.id == user.id
     end
 
     test "does not return user for invalid token" do
-      refute Accounts.get_user_by_session_token("oops")
+      refute Accounts.find_by_session_token("oops")
     end
 
     test "does not return user for expired token", %{token: token} do
       {1, nil} = Repo.update_all(UserToken, set: [inserted_at: ~N[2020-01-01 00:00:00]])
-      refute Accounts.get_user_by_session_token(token)
+      refute Accounts.find_by_session_token(token)
     end
   end
 
-  describe "delete_user_session_token/1" do
+  describe "delete_session_token/1" do
     test "deletes the token" do
       user = user_fixture()
-      token = Accounts.generate_user_session_token(user)
-      assert Accounts.delete_user_session_token(token) == :ok
-      refute Accounts.get_user_by_session_token(token)
+      token = Accounts.create_session_token(user)
+      assert Accounts.delete_session_token(token) == :ok
+      refute Accounts.find_by_session_token(token)
     end
   end
 
@@ -267,10 +268,8 @@ defmodule Nimble.AccountsTest do
     end
 
     test "sends token through notification", %{user: user} do
-      token =
-        extract_user_token_from_email(fn url ->
-          Accounts.deliver_user_confirmation_instructions(user, url)
-        end)
+      {:ok, token} =
+        Accounts.deliver_user_confirmation_instructions(user)
 
       {:ok, token} = Base.url_decode64(token, padding: false)
       assert user_token = Repo.get_by(UserToken, token: :crypto.hash(:sha256, token))
@@ -280,35 +279,36 @@ defmodule Nimble.AccountsTest do
     end
   end
 
-  describe "confirm_user/1" do
+  describe "confirm_user_email/1" do
     setup do
       user = user_fixture()
 
-      token =
-        extract_user_token_from_email(fn url ->
-          Accounts.deliver_user_confirmation_instructions(user, url)
-        end)
+      {:ok, token} = Accounts.deliver_user_confirmation_instructions(user)
 
-      %{user: user, token: token}
+      %{
+        user: user,
+        token: token,
+        error: {:not_found, "Your link is either invalid, or your email has already been confirmed."}
+      }
     end
 
     test "confirms the email with a valid token", %{user: user, token: token} do
-      assert {:ok, confirmed_user} = Accounts.confirm_user(token)
+      assert {:ok, confirmed_user} = Accounts.confirm_user_email(token)
       assert confirmed_user.confirmed_at
       assert confirmed_user.confirmed_at != user.confirmed_at
       assert Repo.get!(User, user.id).confirmed_at
       refute Repo.get_by(UserToken, user_id: user.id)
     end
 
-    test "does not confirm with invalid token", %{user: user} do
-      assert Accounts.confirm_user("oops") == :error
+    test "does not confirm with invalid token", %{user: user, error: error} do
+      assert Accounts.confirm_user_email("oops") == error
       refute Repo.get!(User, user.id).confirmed_at
       assert Repo.get_by(UserToken, user_id: user.id)
     end
 
-    test "does not confirm email if token expired", %{user: user, token: token} do
+    test "does not confirm email if token expired", %{user: user, token: token, error: error} do
       {1, nil} = Repo.update_all(UserToken, set: [inserted_at: ~N[2020-01-01 00:00:00]])
-      assert Accounts.confirm_user(token) == :error
+      assert Accounts.confirm_user_email(token) == error
       refute Repo.get!(User, user.id).confirmed_at
       assert Repo.get_by(UserToken, user_id: user.id)
     end
@@ -320,10 +320,7 @@ defmodule Nimble.AccountsTest do
     end
 
     test "sends token through notification", %{user: user} do
-      token =
-        extract_user_token_from_email(fn url ->
-          Accounts.deliver_user_reset_password_instructions(user, url)
-        end)
+      {:ok, token} = Accounts.deliver_user_reset_password_instructions(user)
 
       {:ok, token} = Base.url_decode64(token, padding: false)
       assert user_token = Repo.get_by(UserToken, token: :crypto.hash(:sha256, token))
@@ -337,10 +334,7 @@ defmodule Nimble.AccountsTest do
     setup do
       user = user_fixture()
 
-      token =
-        extract_user_token_from_email(fn url ->
-          Accounts.deliver_user_reset_password_instructions(user, url)
-        end)
+      {:ok, token} = Accounts.deliver_user_reset_password_instructions(user)
 
       %{user: user, token: token}
     end
@@ -393,7 +387,7 @@ defmodule Nimble.AccountsTest do
     end
 
     test "deletes all tokens for the given user", %{user: user} do
-      _ = Accounts.generate_user_session_token(user)
+      _ = Accounts.create_session_token(user)
       {:ok, _} = Accounts.reset_user_password(user, %{password: "new valid password"})
       refute Repo.get_by(UserToken, user_id: user.id)
     end

@@ -258,19 +258,19 @@ defmodule Nimble.Accounts do
   Delivers the confirmation email instructions to the given user.
 
   ## Examples
-      iex> deliver_user_confirmation_instructions(user, &Routes.user_confirmation_url(conn, :edit, &1))
-      {:ok, %{to: ..., body: ...}}
-      iex> deliver_user_confirmation_instructions(confirmed_user, &Routes.user_confirmation_url(conn, :edit, &1))
-      {:error, :already_confirmed}
+      iex> deliver_user_confirmation_instructions(user)
+      {:ok, encoded_token}
+      iex> deliver_user_confirmation_instructions(confirmed_user)
+      {:not_found, "Your email has already been confirmed."}
   """
   def deliver_user_confirmation_instructions(%User{} = user) do
     if user.confirmed_at do
-      {:not_found, "Your email has already been confirmed."}
+      {:error, "Your email has already been confirmed."}
     else
       {encoded_token, user_token} = UserToken.build_email_token(user, "confirm")
       Repo.insert!(user_token)
       UserNotifier.deliver_confirmation_instructions(user, encoded_token)
-      :ok
+      {:ok, encoded_token}
     end
   end
 
@@ -288,7 +288,7 @@ defmodule Nimble.Accounts do
 
     Repo.insert!(user_token)
     UserNotifier.deliver_user_update_email_instructions(user, encoded_token)
-    :ok
+    {:ok, encoded_token}
   end
 
   @doc """
@@ -296,7 +296,7 @@ defmodule Nimble.Accounts do
 
   ## Examples
       iex> create_session_token(user)
-      "%Token{ ... }"
+      %UserToken{ ... }
   """
   def create_session_token(user) do
     {token, user_token} = UserToken.build_session_token(user)
