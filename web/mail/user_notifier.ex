@@ -6,6 +6,7 @@ defmodule Nimble.UserNotifier do
 
   @delivery_name "Nimble"
   @delivery_email "no-reply@nimble.com"
+  @delivery_url "http://localhost:4000"
 
   # Delivers the email using the application mailer.
   defp deliver(recipient, subject, body) do
@@ -24,7 +25,7 @@ defmodule Nimble.UserNotifier do
   @doc """
   Deliver instructions to confirm account.
   """
-  def deliver_confirmation_instructions(user, url) do
+  def deliver_confirmation_instructions(user, token) do
     deliver(user.email, "Email Confirmation instructions", """
     Hello,
     <p>
@@ -32,8 +33,8 @@ defmodule Nimble.UserNotifier do
     </p>
 
     <p>
-      <a href="http://localhost:3000/user/confirmation/#{url}">
-        http://localhost:3000/user/confirmation/#{url}
+      <a href="#{@delivery_url}/account/email/confirm/#{token}">
+        #{@delivery_url}/account/email/confirm/#{token}
       </a>
     </p>
 
@@ -46,7 +47,7 @@ defmodule Nimble.UserNotifier do
   @doc """
   Deliver instructions to reset a user password.
   """
-  def deliver_reset_password_instructions(user, url) do
+  def deliver_reset_password_instructions(user, token) do
     deliver(user.email, "Reset password instructions", """
 
     ==============================
@@ -55,7 +56,11 @@ defmodule Nimble.UserNotifier do
 
     You can reset your password by visiting the URL below:
 
-    #{url}
+    <p>
+      <a href="#{@delivery_url}/user/password/update/#{token}">
+        #{@delivery_url}/user/password/update/#{token}
+      </a>
+    </p>
 
     If you didn't request this change, please ignore this.
 
@@ -66,7 +71,7 @@ defmodule Nimble.UserNotifier do
   @doc """
   Deliver instructions to update a user email.
   """
-  def deliver_update_email_instructions(user, url) do
+  def deliver_user_update_email_instructions(user, token) do
     deliver(user.email, "Update email instructions", """
 
     ==============================
@@ -75,7 +80,11 @@ defmodule Nimble.UserNotifier do
 
     You can change your email by visiting the URL below:
 
-    #{url}
+    <p>
+      <a href="#{@delivery_url}/user/email/update/#{token}">
+        #{@delivery_url}/user/email/update/#{token}
+      </a>
+    </p>
 
     If you didn't request this change, please ignore this.
 

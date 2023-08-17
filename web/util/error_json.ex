@@ -2,9 +2,13 @@ defmodule Nimble.ErrorJSON do
   alias Nimble.Errors
 
   # Customize a particular status code:
-  # def render("500.json", _assigns) do
-  #   %{errors: %{detail: "Internal Server Error"}}
-  # end
+  def render("404.json", _assigns) do
+    %{errors: %{detail: "Not Found"}}
+  end
+
+  def render("500.json", _assigns) do
+    %{errors: %{detail: "Internal Server Error"}}
+  end
 
   def changeset_error(%{changeset: changeset}) do
     errors =

@@ -12,7 +12,8 @@ defmodule Nimble.Application do
       # Start the PubSub system
       {Phoenix.PubSub, name: Nimble.PubSub},
       # Start the Endpoint (http/https)
-      Nimble.Endpoint
+      Nimble.Endpoint,
+      {Finch, name: Swoosh.Finch}
       # Start a worker by calling: Nimble.Worker.start_link(arg)
       # {Nimble.Worker, arg}
     ]

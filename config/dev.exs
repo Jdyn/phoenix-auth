@@ -32,8 +32,8 @@ config :nimble, :strategies,
     strategy: Assent.Strategy.Github
   ],
   google: [
-    client_id: "405268503410-jl07d9kvkn8dhg88ndsl58qvglfsp9pu.apps.googleusercontent.com",
-    client_secret: "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",
+    client_id: "REPLACE_WITH_CLIENT_ID",
+    client_secret: "REPLACE_WITH_CLIENT_SECRET",
     strategy: Assent.Strategy.Google,
     authorization_params: [
       access_type: "offline",

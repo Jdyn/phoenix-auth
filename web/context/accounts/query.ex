@@ -27,14 +27,11 @@ defmodule Nimble.Accounts.Query do
   Gets all tokens for the given user for the given contexts.
   """
   def user_and_contexts_query(user, :all) do
-    from(t in UserToken, where: t.user_id == ^user.id, order_by: [desc: t.inserted_at])
+    from(t in UserToken, where: t.user_id == ^user.id)
   end
 
   def user_and_contexts_query(user, [_ | _] = contexts) do
-    from(t in UserToken,
-      where: t.user_id == ^user.id and t.context in ^contexts,
-      order_by: [desc: t.inserted_at]
-    )
+    from(t in UserToken, where: t.user_id == ^user.id and t.context in ^contexts)
   end
 
   @doc """

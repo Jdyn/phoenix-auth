@@ -10,8 +10,7 @@ defmodule Nimble.Accounts do
   alias Nimble.UserToken
 
   def authenticate(email, password) when is_binary(email) and is_binary(password) do
-    with %User{} = user <- Repo.get_by(User, email: email),
-         true <- User.valid_password?(user, password) do
+    with %User{} = user <- get_user_by_email_and_password(email, password) do
       {:ok, user}
     else
       _ ->
@@ -21,8 +20,8 @@ defmodule Nimble.Accounts do
 
   def authenticate(provider, %{} = params) when is_binary(provider) and is_map(params) do
     case OAuth.callback(provider, params) do
-      {:ok, %{user: open_user, token: _open_token}} ->
-        with user = %User{} <- Repo.get_by(User, email: open_user["email"]),
+      {:ok, %{user: open_user, token: _token}} ->
+        with user = %User{} <- get_user_by_email(open_user["email"]),
              false <- is_nil(user.confirmed_at) do
           {:ok, user}
         else
@@ -51,32 +50,20 @@ defmodule Nimble.Accounts do
 
   ## Examples
 
-    iex> register(%{field: value})
-    {:ok, %User{}}
+      iex> register(%{field: value})
+      {:ok, %User{}}
 
-    iex> register(%{field: value}, :oauth)
-    {:ok, %User{}}
-
-    iex> register(%{field: bad_value})
-    {:error, %Ecto.Changeset{}}
+      iex> register(%{field: bad_value})
+      {:error, %Ecto.Changeset{}}
   """
-  def register(attrs, type \\ :default) do
-    case type do
-      :default ->
-        %User{}
-        |> User.registration_changeset(attrs)
-        |> Repo.insert()
+  def register(attrs) do
+    %User{} |> User.registration_changeset(attrs) |> Repo.insert()
+  end
 
-      :oauth ->
-        attrs = user_from_oauth(attrs)
-
-        %User{}
-        |> User.oauth_registration_changeset(attrs)
-        |> Repo.insert()
-
-      _ ->
-        raise ArgumentError, "Unknown registration type: #{inspect(type)}"
-    end
+  def register(attrs, :oauth) do
+    %User{}
+    |> User.oauth_registration_changeset(user_from_oauth(attrs))
+    |> Repo.insert()
   end
 
   defp user_from_oauth(attrs) do
@@ -90,42 +77,18 @@ defmodule Nimble.Accounts do
   end
 
   @doc """
-  Returns an `%Ecto.Changeset{}` for tracking user changes.
-
-  ## Examples
-
-      iex> change_user_registration(user)
-      %Ecto.Changeset{data: %User{}}
-  """
-  def change_user_registration(%User{} = user, attrs \\ %{}) do
-    User.registration_changeset(user, attrs)
-  end
-
-  @doc """
-  Returns an `%Ecto.Changeset{}` for changing the user e-mail.
-
-  ## Examples
-
-      iex> change_email(user)
-      %Ecto.Changeset{data: %User{}}
-  """
-  def change_email(user, attrs \\ %{}) do
-    User.email_changeset(user, attrs)
-  end
-
-  @doc """
   Emulates that the e-mail will change without actually changing
   it in the database.
 
   ## Examples
 
-    iex> apply_user_email(user, "valid password", %{email: ...})
-    {:ok, %User{}}
+      iex> prepare_email_update(user, "valid password", %{email: ...})
+      {:ok, %User{}}
 
-    iex> apply_user_email(user, "invalid password", %{email: ...})
-    {:error, %Ecto.Changeset{}}
+      iex> prepare_email_update(user, "invalid password", %{email: ...})
+      {:error, %Ecto.Changeset{}}
   """
-  def apply_user_email(user, password, attrs) do
+  def prepare_email_update(user, password, attrs) do
     user
     |> User.email_changeset(attrs)
     |> User.validate_current_password(password)
@@ -133,9 +96,9 @@ defmodule Nimble.Accounts do
   end
 
   @doc """
-  Updates the user e-mail in token.
-  If the token matches, the user email is updated and the token is deleted.
-  The confirmed_at date is also updated to the current time.
+  - Updates the user e-mail in token.
+  - If the token matches, the user email is updated and the token is deleted.
+  - The `confirmed_at` date is also updated to the current time.
   """
   def update_user_email(user, token) do
     context = "change:#{user.email}"
@@ -145,7 +108,7 @@ defmodule Nimble.Accounts do
          {:ok, _} <- Repo.transaction(user_email_multi(user, email, context)) do
       :ok
     else
-      _ -> :error
+      _ -> {:not_found, "Invalid link. Please generate a new one."}
     end
   end
 
@@ -158,29 +121,27 @@ defmodule Nimble.Accounts do
   end
 
   @doc """
-  Returns an `%Ecto.Changeset{}` for changing the user password.
-
-  ## Examples
-
-    iex> change_user_password(user)
-    %Ecto.Changeset{data: %User{}}
-  """
-  def change_user_password(user, attrs \\ %{}) do
-    User.password_changeset(user, attrs)
-  end
-
-  @doc """
   Updates the user password.
 
   ## Examples
 
-    iex> update_user_password(user, "valid password", %{password: ...})
-    {:ok, %User{}}
+      iex> update_user_password(user, "valid password", %{password: ...})
+      {:ok, %User{}}
 
-    iex> update_user_password(user, "invalid password", %{password: ...})
-    {:error, %Ecto.Changeset{}}
+      iex> update_user_password(user, "invalid password", %{password: ...})
+      {:error, %Ecto.Changeset{}}
   """
   def update_user_password(user, password, attrs) do
+    user
+    |> user_password_multi(password, attrs)
+    |> Repo.transaction()
+    |> case do
+      {:ok, %{user: user}} -> {:ok, user}
+      {:error, :user, changeset, _} -> {:error, changeset}
+    end
+  end
+
+  defp user_password_multi(user, password, attrs) do
     changeset =
       user
       |> User.password_changeset(attrs)
@@ -189,11 +150,6 @@ defmodule Nimble.Accounts do
     Ecto.Multi.new()
     |> Ecto.Multi.update(:user, changeset)
     |> Ecto.Multi.delete_all(:tokens, Accounts.Query.user_and_contexts_query(user, :all))
-    |> Repo.transaction()
-    |> case do
-      {:ok, %{user: user}} -> {:ok, user}
-      {:error, :user, changeset, _} -> {:error, changeset}
-    end
   end
 
   ## Confirmation
@@ -214,12 +170,12 @@ defmodule Nimble.Accounts do
     end
   end
 
-  defp confirm_user_multi(user = %User{}) do
+  defp confirm_user_multi(%User{} = user) do
     Ecto.Multi.new()
     |> Ecto.Multi.update(:user, User.confirm_changeset(user))
     |> Ecto.Multi.delete_all(
       :tokens,
-      user |> Accounts.Query.user_and_contexts_query(["confirm"]) |> Ecto.Query.exclude(:order_by)
+      user |> Accounts.Query.user_and_contexts_query(["confirm"])
     )
   end
 
@@ -241,6 +197,23 @@ defmodule Nimble.Accounts do
     else
       _ -> nil
     end
+  end
+
+  @doc """
+  Gets a user by email and password.
+
+  ## Examples
+
+      iex> get_user_by_email_and_password("foo@example.com", "correct_password")
+      %User{}
+
+      iex> get_user_by_email_and_password("foo@example.com", "invalid_password")
+      nil
+
+  """
+  def get_user_by_email_and_password(email, password) when is_binary(email) and is_binary(password) do
+    user = Repo.get_by(User, email: email)
+    if User.valid_password?(user, password), do: user
   end
 
   @doc """
@@ -298,6 +271,23 @@ defmodule Nimble.Accounts do
       UserNotifier.deliver_confirmation_instructions(user, encoded_token)
       :ok
     end
+  end
+
+  @doc """
+  Delivers the update email instructions to the given user.
+
+  ## Examples
+
+      iex> deliver_user_update_email_instructions(user, current_email)
+      :ok
+
+  """
+  def deliver_user_update_email_instructions(%User{} = user, current_email) do
+    {encoded_token, user_token} = UserToken.build_email_token(user, "change:#{current_email}")
+
+    Repo.insert!(user_token)
+    UserNotifier.deliver_user_update_email_instructions(user, encoded_token)
+    :ok
   end
 
   @doc """

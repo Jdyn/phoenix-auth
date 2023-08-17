@@ -39,6 +39,7 @@ defmodule Nimble.MixProject do
       {:assent, "~> 0.2.3"},
       {:styler, "~> 0.8.4", only: [:dev, :test], runtime: false},
       {:jason, "~> 1.4.1"},
+      {:finch, "~> 0.16.0"},
       {:cors_plug, "~> 3.0.3"},
       {:pbkdf2_elixir, "~> 2.1.0"},
       {:plug_cowboy, "~> 2.6.1"}

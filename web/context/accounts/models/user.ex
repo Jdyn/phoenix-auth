@@ -5,6 +5,7 @@ defmodule Nimble.User do
 
   use Nimble.Web, :model
 
+  alias Nimble.Repo
   alias Nimble.User
   alias Nimble.UserToken
 
@@ -46,6 +47,13 @@ defmodule Nimble.User do
     |> validate_password()
   end
 
+  def update_changeset(%User{} = user, attrs) do
+    user
+    |> cast(attrs, @registration_fields)
+    |> validate_required(@registration_fields)
+    |> validate_email()
+  end
+
   def oauth_registration_changeset(%User{} = user, attrs) do
     user
     |> cast(attrs, @registration_fields)
@@ -57,15 +65,16 @@ defmodule Nimble.User do
     changeset
     |> validate_required([:email])
     |> update_change(:email, &String.downcase(&1))
-    |> validate_format(:email, ~r/^[^\s]+@[^\s]+$/)
+    |> validate_format(:email, ~r/^[^\s]+@[^\s]+$/, message: "must have the @ sign and no spaces")
     |> validate_length(:email, max: 80)
+    |> unsafe_validate_unique(:email, Repo)
     |> unique_constraint(:email)
   end
 
   defp validate_password(changeset) do
     changeset
     |> validate_required([:password])
-    |> validate_length(:password, min: 8, max: 80)
+    |> validate_length(:password, min: 12, max: 80)
     |> validate_format(:password, ~r/[a-z]/, message: "at least one lower case character")
     |> validate_format(:password, ~r/[A-Z]/, message: "at least one upper case character")
     |> validate_format(:password, ~r/[!?@#$%^&*_0-9]/, message: "at least one digit or punctuation character")

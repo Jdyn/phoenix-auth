@@ -20,6 +20,9 @@ defmodule Nimble.UserController do
     |> render(:show, user: conn.assigns[:current_user])
   end
 
+  @doc """
+  Shows all sessions associated with a user.
+  """
   def show_sessions(conn, _params) do
     current_user = conn.assigns[:current_user]
 
@@ -49,8 +52,7 @@ defmodule Nimble.UserController do
   end
 
   @doc """
-  Creates a user
-  Generates a new User and populates the session
+  Creates a new User and populates the session
   """
   def sign_up(conn, params) do
     with {:ok, user} <- Accounts.register(params) do
@@ -125,7 +127,7 @@ defmodule Nimble.UserController do
     end
   end
 
-  def send_user_email_confirmation(conn, _params) do
+  def send_email_confirmation(conn, _params) do
     current_user = conn.assigns[:current_user]
 
     with user <- Accounts.get_user_by_email(current_user.email),
@@ -134,9 +136,41 @@ defmodule Nimble.UserController do
     end
   end
 
-  def do_user_email_confirmation(conn, %{"token" => token}) do
+  def do_email_confirmation(conn, %{"token" => token}) do
     with {:ok, _} <- Accounts.confirm_user_email(token) do
       json(conn, %{ok: true})
+    end
+  end
+
+  @doc """
+  - Accepts a `current_password` and a `user` map of the proposed changes.
+  - Sends an email to the current email address to confirm the change.
+  - `Returns` a message to check the old email or an error.
+  """
+  def send_update_email(conn, %{"current_password" => password, "user" => new_user} = _params) do
+    current_user = conn.assigns[:current_user]
+
+    with {:ok, prepared_user} <- Accounts.prepare_email_update(current_user, password, new_user),
+         :ok <- Accounts.deliver_user_update_email_instructions(prepared_user, current_user.email) do
+      json(conn, %{data: "A link to confirm your email change has been sent to the new address."})
+    end
+  end
+
+  def do_update_email(conn, %{"token" => token}) do
+    with :ok <- Accounts.update_user_email(conn.assigns[:current_user], token) do
+      json(conn, %{data: "Email changed successfully."})
+    end
+  end
+
+  @doc """
+  - Accepts a `current_password` and a `user` map of the proposed changes.
+  - If the password is correct, it updates the password.
+  """
+  def update_password(conn, %{"current_password" => old_password, "user" => new_user} = _params) do
+    current_user = conn.assigns[:current_user]
+
+    with {:ok, _user} <- Accounts.update_user_password(current_user, old_password, new_user) do
+      json(conn, %{data: "Password changed successfully."})
     end
   end
 
