@@ -6,6 +6,7 @@ defmodule Nimble.AccountsTest do
   alias Nimble.Accounts
   alias Nimble.User
   alias Nimble.UserToken
+  alias Nimble.Users
 
   describe "reigster/1" do
     test "requires required fields to be set" do
@@ -62,14 +63,13 @@ defmodule Nimble.AccountsTest do
     end
   end
 
-  describe "deliver_user_update_email_instructions/3" do
+  describe "deliver_email_update_instructions/3" do
     setup do
       %{user: user_fixture()}
     end
 
     test "sends token through notification", %{user: user} do
-      {:ok, token} =
-        Accounts.deliver_user_update_email_instructions(user, "current@example.com")
+      {:ok, token} = Users.deliver_email_update_instructions(user, "current@example.com")
 
       {:ok, token} = Base.url_decode64(token, padding: false)
       assert user_token = Repo.get_by(UserToken, token: :crypto.hash(:sha256, token))
@@ -139,7 +139,7 @@ defmodule Nimble.AccountsTest do
 
     test "sends token through notification", %{user: user} do
       {:ok, token} =
-        Accounts.deliver_user_confirmation_instructions(user)
+        Users.deliver_email_confirmation_instructions(user)
 
       {:ok, token} = Base.url_decode64(token, padding: false)
       assert user_token = Repo.get_by(UserToken, token: :crypto.hash(:sha256, token))
@@ -149,29 +149,13 @@ defmodule Nimble.AccountsTest do
     end
   end
 
-  describe "deliver_user_reset_password_instructions/2" do
-    setup do
-      %{user: user_fixture()}
-    end
-
-    test "sends token through notification", %{user: user} do
-      {:ok, token} = Accounts.deliver_user_reset_password_instructions(user)
-
-      {:ok, token} = Base.url_decode64(token, padding: false)
-      assert user_token = Repo.get_by(UserToken, token: :crypto.hash(:sha256, token))
-      assert user_token.user_id == user.id
-      assert user_token.sent_to == user.email
-      assert user_token.context == "reset_password"
-    end
-  end
-
   describe "get_user_by_reset_password_token/1" do
     setup do
       user = user_fixture()
 
-      {:ok, token} = Accounts.deliver_user_reset_password_instructions(user)
+      {:ok, token} = Users.deliver_password_reset_instructions(user)
 
-      %{user: user, token: token}
+      %{user: user, token: token, error: {:error, "Reset password link is invalid or it has expired."}}
     end
 
     test "returns the user with valid token", %{user: %{id: id}, token: token} do
@@ -179,52 +163,15 @@ defmodule Nimble.AccountsTest do
       assert Repo.get_by(UserToken, user_id: id)
     end
 
-    test "does not return the user with invalid token", %{user: user} do
-      refute Accounts.get_user_by_reset_password_token("oops")
+    test "does not return the user with invalid token", %{user: user, error: error} do
+      assert Accounts.get_user_by_reset_password_token("oops") == error
       assert Repo.get_by(UserToken, user_id: user.id)
     end
 
-    test "does not return the user if token expired", %{user: user, token: token} do
+    test "does not return the user if token expired", %{user: user, token: token, error: error} do
       {1, nil} = Repo.update_all(UserToken, set: [inserted_at: ~N[2020-01-01 00:00:00]])
-      refute Accounts.get_user_by_reset_password_token(token)
+      assert Accounts.get_user_by_reset_password_token(token) == error
       assert Repo.get_by(UserToken, user_id: user.id)
-    end
-  end
-
-  describe "reset_user_password/2" do
-    setup do
-      %{user: user_fixture()}
-    end
-
-    test "validates password", %{user: user} do
-      {:error, changeset} =
-        Accounts.reset_user_password(user, %{
-          password: "not valid",
-          password_confirmation: "another"
-        })
-
-      assert %{
-               password: ["should be at least 12 character(s)"],
-               password_confirmation: ["does not match password"]
-             } = errors_on(changeset)
-    end
-
-    test "validates maximum values for password for security", %{user: user} do
-      too_long = String.duplicate("db", 100)
-      {:error, changeset} = Accounts.reset_user_password(user, %{password: too_long})
-      assert "should be at most 72 character(s)" in errors_on(changeset).password
-    end
-
-    test "updates the password", %{user: user} do
-      {:ok, updated_user} = Accounts.reset_user_password(user, %{password: "new valid password"})
-      assert is_nil(updated_user.password)
-      assert Accounts.get_user_by_email_and_password(user.email, "new valid password")
-    end
-
-    test "deletes all tokens for the given user", %{user: user} do
-      _ = Accounts.create_session_token(user)
-      {:ok, _} = Accounts.reset_user_password(user, %{password: "new valid password"})
-      refute Repo.get_by(UserToken, user_id: user.id)
     end
   end
 end

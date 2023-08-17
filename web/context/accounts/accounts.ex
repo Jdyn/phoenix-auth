@@ -6,7 +6,6 @@ defmodule Nimble.Accounts do
   alias Nimble.Auth.OAuth
   alias Nimble.Repo
   alias Nimble.User
-  alias Nimble.UserNotifier
   alias Nimble.Users
   alias Nimble.UserToken
 
@@ -77,40 +76,23 @@ defmodule Nimble.Accounts do
   end
 
   @doc """
-  Delivers the confirmation email instructions to the given user.
+  Gets the user by reset password token.
 
   ## Examples
-      iex> deliver_user_confirmation_instructions(user)
-      {:ok, encoded_token}
-      iex> deliver_user_confirmation_instructions(confirmed_user)
-      {:not_found, "Your email has already been confirmed."}
+
+    iex> get_user_by_reset_password_token("validtoken")
+    %User{}
+
+    iex> get_user_by_reset_password_token("invalidtoken")
+    nil
   """
-  def deliver_user_confirmation_instructions(%User{} = user) do
-    if user.confirmed_at do
-      {:error, "Your email has already been confirmed."}
+  def get_user_by_reset_password_token(token) do
+    with {:ok, query} <- UserToken.verify_email_token_query(token, "reset_password"),
+         %User{} = user <- Repo.one(query) do
+      user
     else
-      {encoded_token, user_token} = UserToken.build_email_token(user, "confirm")
-      Repo.insert!(user_token)
-      UserNotifier.deliver_confirmation_instructions(user, encoded_token)
-      {:ok, encoded_token}
+      _ -> {:error, "Reset password link is invalid or it has expired."}
     end
-  end
-
-  @doc """
-  Delivers the update email instructions to the given user.
-
-  ## Examples
-
-      iex> deliver_user_update_email_instructions(user, current_email)
-      :ok
-
-  """
-  def deliver_user_update_email_instructions(%User{} = user, current_email) do
-    {encoded_token, user_token} = UserToken.build_email_token(user, "change:#{current_email}")
-
-    Repo.insert!(user_token)
-    UserNotifier.deliver_user_update_email_instructions(user, encoded_token)
-    {:ok, encoded_token}
   end
 
   @doc """
@@ -173,7 +155,11 @@ defmodule Nimble.Accounts do
   @doc """
   Returns all tokens for the given user.
   """
-  def find_all(user), do: Repo.all(Accounts.Query.user_and_contexts_query(user, ["all"]))
+  def find_all_tokens(user), do: Repo.all(Accounts.Query.user_and_contexts_query(user, ["all"]))
+
+  @doc """
+  Returns all session tokens for the given user.
+  """
   def find_all_sessions(user), do: Repo.all(Accounts.Query.user_and_contexts_query(user, ["session"]))
 
   def find_session(user, tracking_id: id) do

@@ -2,10 +2,48 @@ defmodule Nimble.Users do
   @moduledoc false
   use Nimble.Web, :context
 
+  alias Nimble.UserNotifier
   alias Nimble.Accounts.Query
   alias Nimble.Repo
   alias Nimble.User
   alias Nimble.UserToken
+
+        @doc """
+  Delivers the confirmation email instructions to the given user.
+
+  ## Examples
+      iex> deliver_user_confirmation_instructions(user)
+      {:ok, encoded_token}
+      iex> deliver_user_confirmation_instructions(confirmed_user)
+      {:not_found, "Your email has already been confirmed."}
+  """
+  def deliver_email_confirmation_instructions(%User{} = user) do
+    if user.confirmed_at do
+      {:error, "Your email has already been confirmed."}
+    else
+      {encoded_token, user_token} = UserToken.build_email_token(user, "confirm")
+      Repo.insert!(user_token)
+      UserNotifier.deliver_confirmation_instructions(user, encoded_token)
+      {:ok, encoded_token}
+    end
+  end
+
+    @doc """
+  Delivers the update email instructions to the given user.
+
+  ## Examples
+
+      iex> deliver_user_update_email_instructions(user, current_email)
+      {:ok, encoded_token}
+
+  """
+  def deliver_email_update_instructions(%User{} = user, current_email) do
+    {encoded_token, user_token} = UserToken.build_email_token(user, "change:#{current_email}")
+
+    Repo.insert!(user_token)
+    UserNotifier.deliver_user_update_email_instructions(user, encoded_token)
+    {:ok, encoded_token}
+  end
 
   @doc """
   Emulates that the e-mail will change without actually changing
@@ -51,19 +89,35 @@ defmodule Nimble.Users do
     |> Ecto.Multi.delete_all(:tokens, Query.user_and_contexts_query(user, [context]))
   end
 
+      @doc ~S"""
+  Delivers the reset password email to the given user.
+
+  ## Examples
+
+      iex> deliver_password_reset_instructions(user)
+      {:ok, encoded_token}
+
+  """
+  def deliver_password_reset_instructions(%User{} = user) do
+    {encoded_token, user_token} = UserToken.build_email_token(user, "reset_password")
+    Repo.insert!(user_token)
+    UserNotifier.deliver_password_reset_instructions(user, encoded_token)
+    {:ok, encoded_token}
+  end
+
   @doc """
   Resets the user password.
 
   ## Examples
 
-    iex> reset_user_password(user, %{password: "new long password", password_confirmation: "new long password"})
+    iex> reset_password(user, %{password: "new long password", password_confirmation: "new long password"})
     {:ok, %User{}}
 
-    iex> reset_user_password(user, %{password: "valid", password_confirmation: "not the same"})
+    iex> reset_password(user, %{password: "valid", password_confirmation: "not the same"})
     {:error, %Ecto.Changeset{}}
 
   """
-  def reset_user_password(user, attrs) do
+  def reset_password(user, attrs) do
     Ecto.Multi.new()
     |> Ecto.Multi.update(:user, User.password_changeset(user, attrs))
     |> Ecto.Multi.delete_all(:tokens, Query.user_and_contexts_query(user, ["all"]))
@@ -71,26 +125,6 @@ defmodule Nimble.Users do
     |> case do
       {:ok, %{user: user}} -> {:ok, user}
       {:error, :user, changeset, _} -> {:error, changeset}
-    end
-  end
-
-  @doc """
-  Gets the user by reset password token.
-
-  ## Examples
-
-    iex> get_by_reset_password_token("validtoken")
-    %User{}
-
-    iex> get_by_reset_password_token("invalidtoken")
-    nil
-  """
-  def get_by_reset_password_token(token) do
-    with {:ok, query} <- UserToken.verify_email_token_query(token, "reset_password"),
-         %User{} = user <- Repo.one(query) do
-      user
-    else
-      _ -> nil
     end
   end
 

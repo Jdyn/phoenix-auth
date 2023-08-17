@@ -22,6 +22,9 @@ defmodule Nimble.Router do
       post("/signin", UserController, :sign_in)
       get("/:provider/request", UserController, :provider_request)
       get("/:provider/callback", UserController, :provider_callback)
+
+      post("/password/reset", UserController, :send_reset_password)
+      patch("/password/reset/:token", UserController, :do_reset_password)
     end
   end
 

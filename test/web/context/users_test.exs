@@ -37,13 +37,29 @@ defmodule Nimble.UsersTest do
     end
   end
 
+  describe "deliver_password_reset_instructions/2" do
+    setup do
+      %{user: user_fixture()}
+    end
+
+    test "sends token through notification", %{user: user} do
+      {:ok, token} = Users.deliver_password_reset_instructions(user)
+
+      {:ok, token} = Base.url_decode64(token, padding: false)
+      assert user_token = Repo.get_by(UserToken, token: :crypto.hash(:sha256, token))
+      assert user_token.user_id == user.id
+      assert user_token.sent_to == user.email
+      assert user_token.context == "reset_password"
+    end
+  end
+
   describe "update_email/2" do
     setup do
       user = user_fixture()
       email = unique_user_email()
 
       {:ok, token} =
-        Accounts.deliver_user_update_email_instructions(%{user | email: email}, user.email)
+        Users.deliver_email_update_instructions(%{user | email: email}, user.email)
 
       %{user: user, token: token, email: email, error: {:not_found, "Invalid link. Please generate a new one."}}
     end
@@ -82,7 +98,7 @@ defmodule Nimble.UsersTest do
     setup do
       user = user_fixture()
 
-      {:ok, token} = Accounts.deliver_user_confirmation_instructions(user)
+      {:ok, token} = Users.deliver_email_confirmation_instructions(user)
 
       %{
         user: user,
@@ -169,6 +185,47 @@ defmodule Nimble.UsersTest do
           password: "New valid password 123"
         })
 
+      refute Repo.get_by(UserToken, user_id: user.id)
+    end
+  end
+
+  describe "reset_user_password/2" do
+    setup do
+      %{user: user_fixture()}
+    end
+
+    test "validates password", %{user: user} do
+      {:error, changeset} =
+        Users.reset_password(user, %{
+          password: "not valid",
+          password_confirmation: "another"
+        })
+
+      assert %{
+               password: [
+                 "at least one digit or punctuation character",
+                 "at least one upper case character",
+                 "should be at least 12 character(s)"
+               ],
+               password_confirmation: ["does not match password"]
+             } = errors_on(changeset)
+    end
+
+    test "validates maximum values for password for security", %{user: user} do
+      too_long = String.duplicate("db", 100)
+      {:error, changeset} = Users.reset_password(user, %{password: too_long})
+      assert "should be at most 80 character(s)" in errors_on(changeset).password
+    end
+
+    test "updates the password", %{user: user} do
+      {:ok, updated_user} = Users.reset_password(user, %{password: "New valid password 123"})
+      assert is_nil(updated_user.password)
+      assert Users.get_by_email_and_password(user.email, "New valid password 123")
+    end
+
+    test "deletes all tokens for the given user", %{user: user} do
+      _ = Accounts.create_session_token(user)
+      {:ok, _} = Users.reset_password(user, %{password: "New valid password 123"})
       refute Repo.get_by(UserToken, user_id: user.id)
     end
   end
