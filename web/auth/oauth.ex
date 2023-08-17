@@ -1,7 +1,9 @@
 defmodule Nimble.Auth.OAuth do
   @moduledoc false
   alias Assent.Config
+  alias Nimble.User
 
+  @spec request(String.t()) :: {:ok, %{url: String.t(), session_params: map}} | {:not_found, String.t()}
   def request(provider) do
     if config = config(provider) do
       config = Config.put(config, :redirect_uri, build_uri(provider))
@@ -11,6 +13,7 @@ defmodule Nimble.Auth.OAuth do
     end
   end
 
+  @spec callback(String.t(), map, map) :: {:ok, %{user: User.t(), token: String.t()}} | {:not_found, String.t()}
   def callback(provider, params, session_params \\ %{}) do
     if config = config(provider) do
       config =
@@ -24,6 +27,7 @@ defmodule Nimble.Auth.OAuth do
     end
   end
 
+  @spec config(String.t()) :: list | nil
   defp config(provider) do
     Application.get_env(:nimble, :strategies)[String.to_existing_atom(provider)]
   rescue

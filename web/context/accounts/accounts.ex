@@ -21,6 +21,7 @@ defmodule Nimble.Accounts do
   def authenticate(provider, %{} = params) when is_binary(provider) and is_map(params) do
     case OAuth.callback(provider, params) do
       {:ok, %{user: open_user, token: _token}} ->
+
         with user = %User{} <- get_user_by_email(open_user["email"]),
              false <- is_nil(user.confirmed_at) do
           {:ok, user}
@@ -149,7 +150,7 @@ defmodule Nimble.Accounts do
 
     Ecto.Multi.new()
     |> Ecto.Multi.update(:user, changeset)
-    |> Ecto.Multi.delete_all(:tokens, Accounts.Query.user_and_contexts_query(user, :all))
+    |> Ecto.Multi.delete_all(:tokens, Accounts.Query.user_and_contexts_query(user, ["all"]))
   end
 
   ## Confirmation
@@ -245,7 +246,7 @@ defmodule Nimble.Accounts do
   def reset_user_password(user, attrs) do
     Ecto.Multi.new()
     |> Ecto.Multi.update(:user, User.password_changeset(user, attrs))
-    |> Ecto.Multi.delete_all(:tokens, Accounts.Query.user_and_contexts_query(user, :all))
+    |> Ecto.Multi.delete_all(:tokens, Accounts.Query.user_and_contexts_query(user, ["all"]))
     |> Repo.transaction()
     |> case do
       {:ok, %{user: user}} -> {:ok, user}
@@ -350,7 +351,7 @@ defmodule Nimble.Accounts do
   @doc """
   Returns all tokens for the given user.
   """
-  def find_all(user), do: Repo.all(Accounts.Query.user_and_contexts_query(user, :all))
+  def find_all(user), do: Repo.all(Accounts.Query.user_and_contexts_query(user, ["all"]))
   def find_all_sessions(user), do: Repo.all(Accounts.Query.user_and_contexts_query(user, ["session"]))
 
   def find_session(user, tracking_id: id) do
