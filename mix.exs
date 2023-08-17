@@ -37,8 +37,6 @@ defmodule Nimble.MixProject do
       {:postgrex, "~> 0.17.2"},
       {:swoosh, "~> 1.11.5"},
       {:assent, "~> 0.2.3"},
-      {:telemetry_metrics, "~> 0.6.1"},
-      {:telemetry_poller, "~> 1.0.0"},
       {:styler, "~> 0.8.4", only: [:dev, :test], runtime: false},
       {:jason, "~> 1.4.1"},
       {:cors_plug, "~> 3.0.3"},

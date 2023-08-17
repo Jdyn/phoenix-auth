@@ -9,8 +9,6 @@ defmodule Nimble.Application do
     children = [
       # Start the Ecto repository
       Nimble.Repo,
-      # Start the Telemetry supervisor
-      Nimble.Telemetry,
       # Start the PubSub system
       {Phoenix.PubSub, name: Nimble.PubSub},
       # Start the Endpoint (http/https)

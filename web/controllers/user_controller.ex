@@ -9,7 +9,7 @@ defmodule Nimble.UserController do
   # Valid for 30 days.
   @max_age 60 * 60 * 24 * 30
   @remember_me_cookie "remember_token"
-  @remember_me_options [sign: true, max_age: @max_age, same_site: "Lax"]
+  @remember_me_options [sign: true, max_age: @max_age, same_site: "none", secure: true]
 
   def show(conn, _params) do
     token = get_session(conn, :user_token)
