@@ -3,6 +3,7 @@ defmodule Nimble.UserController do
 
   alias Nimble.Accounts
   alias Nimble.Auth.OAuth
+  alias Nimble.Users
 
   action_fallback(Nimble.ErrorController)
 
@@ -130,14 +131,14 @@ defmodule Nimble.UserController do
   def send_email_confirmation(conn, _params) do
     current_user = conn.assigns[:current_user]
 
-    with user <- Accounts.get_user_by_email(current_user.email),
+    with user <- Users.get_by_email(current_user.email),
          {:ok, _token} <- Accounts.deliver_user_confirmation_instructions(user) do
       json(conn, %{ok: true})
     end
   end
 
   def do_email_confirmation(conn, %{"token" => token}) do
-    with {:ok, _} <- Accounts.confirm_user_email(token) do
+    with {:ok, _} <- Users.confirm_email(token) do
       json(conn, %{ok: true})
     end
   end
@@ -150,14 +151,14 @@ defmodule Nimble.UserController do
   def send_update_email(conn, %{"current_password" => password, "user" => new_user} = _params) do
     current_user = conn.assigns[:current_user]
 
-    with {:ok, prepared_user} <- Accounts.prepare_email_update(current_user, password, new_user),
+    with {:ok, prepared_user} <- Users.prepare_email_update(current_user, password, new_user),
          {:ok, _encoded_token} <- Accounts.deliver_user_update_email_instructions(prepared_user, current_user.email) do
       json(conn, %{data: "A link to confirm your email change has been sent to the new address."})
     end
   end
 
   def do_update_email(conn, %{"token" => token}) do
-    with :ok <- Accounts.update_user_email(conn.assigns[:current_user], token) do
+    with :ok <- Users.update_email(conn.assigns[:current_user], token) do
       json(conn, %{data: "Email changed successfully."})
     end
   end
@@ -169,7 +170,7 @@ defmodule Nimble.UserController do
   def update_password(conn, %{"current_password" => old_password, "user" => new_user} = _params) do
     current_user = conn.assigns[:current_user]
 
-    with {:ok, _user} <- Accounts.update_user_password(current_user, old_password, new_user) do
+    with {:ok, _user} <- Users.update_password(current_user, old_password, new_user) do
       json(conn, %{data: "Password changed successfully."})
     end
   end

@@ -19,9 +19,6 @@ defmodule Nimble.ConnCase do
 
   using do
     quote do
-      # The default endpoint for testing
-      use Nimble, :verified_routes
-
       # Import conveniences for testing with connections
       import Nimble.ConnCase
       import Phoenix.ConnTest
