@@ -17,14 +17,14 @@ defmodule Nimble.UserController do
     conn
     |> put_remember_token(token)
     |> configure_session(renew: true)
-    |> render("show.json", user: conn.assigns[:current_user])
+    |> render(:show, user: conn.assigns[:current_user])
   end
 
   def show_sessions(conn, _params) do
     current_user = conn.assigns[:current_user]
 
     tokens = Accounts.find_all_sessions(current_user)
-    render(conn, "sessions.json", tokens: tokens)
+    render(conn, :sessions, tokens: tokens)
   end
 
   @doc """
@@ -35,7 +35,7 @@ defmodule Nimble.UserController do
     token = get_session(conn, :user_token)
 
     with :ok <- Accounts.delete_session_token(user, tracking_id, token) do
-      render(conn, "ok.json")
+      render(conn, %{ok: true})
     end
   end
 
@@ -44,7 +44,7 @@ defmodule Nimble.UserController do
     token = get_session(conn, :user_token)
 
     with token <- Accounts.delete_session_tokens(user, token) do
-      render(conn, "sessions.json", tokens: [token])
+      render(conn, :sessions, tokens: [token])
     end
   end
 
@@ -53,7 +53,7 @@ defmodule Nimble.UserController do
   Generates a new User and populates the session
   """
   def sign_up(conn, params) do
-    with {:ok, user} <- Accounts.register(params, :default) do
+    with {:ok, user} <- Accounts.register(params) do
       token = Accounts.create_session_token(user)
 
       conn
@@ -61,7 +61,7 @@ defmodule Nimble.UserController do
       |> put_session(:user_token, token)
       |> put_remember_token(token)
       |> put_status(:created)
-      |> render("show.json", user: user)
+      |> render(:show, user: user)
     end
   end
 
@@ -79,7 +79,7 @@ defmodule Nimble.UserController do
       |> renew_session()
       |> put_session(:user_token, token)
       |> put_remember_token(token)
-      |> render("login.json", user: user)
+      |> render(:show, user: user)
     else
       nil ->
         {:unauthorized, "You are already signed in."}
@@ -100,12 +100,12 @@ defmodule Nimble.UserController do
     conn
     |> renew_session()
     |> delete_resp_cookie(@remember_me_cookie)
-    |> render("ok.json")
+    |> render(%{ok: true})
   end
 
   def provider_request(conn, %{"provider" => provider}) do
     with {:ok, %{url: url, session_params: _}} <- OAuth.request(provider) do
-      render(conn, "get_provider.json", url: url)
+      render(conn, :get_provider, url: url)
     end
   end
 
@@ -121,7 +121,7 @@ defmodule Nimble.UserController do
       |> put_session(:user_token, token)
       |> put_remember_token(token)
       |> put_status(:created)
-      |> render("show.json", user: user)
+      |> render(:show, user: user)
     end
   end
 
@@ -130,13 +130,13 @@ defmodule Nimble.UserController do
 
     with user <- Accounts.get_user_by_email(current_user.email),
          :ok <- Accounts.deliver_user_confirmation_instructions(user) do
-      render(conn, "ok.json")
+      render(conn, %{ok: true})
     end
   end
 
   def do_user_email_confirmation(conn, %{"token" => token}) do
     with {:ok, _} <- Accounts.confirm_user_email(token) do
-      render(conn, "ok.json")
+      render(conn, %{ok: true})
     end
   end
 

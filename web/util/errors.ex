@@ -1,4 +1,4 @@
-defmodule Nimble.ErrorHelpers do
+defmodule Nimble.Errors do
   @moduledoc """
   Conveniences for translating and building error messages.
   """

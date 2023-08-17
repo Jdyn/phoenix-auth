@@ -17,7 +17,7 @@ defmodule Nimble.Router do
   end
 
   scope "/api", Nimble do
-    pipe_through(:api)
+    pipe_through([:api])
 
     resources("/account", UserController, singleton: true, only: []) do
       post("/signup", UserController, :sign_up)

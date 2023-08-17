@@ -4,8 +4,6 @@ defmodule Nimble.Auth.EnsureAuth do
 
   import Plug.Conn
 
-  alias Nimble.ErrorView
-
   def init(opts), do: opts
 
   @doc """
@@ -17,7 +15,7 @@ defmodule Nimble.Auth.EnsureAuth do
     else
       conn
       |> put_status(:unauthorized)
-      |> put_view(ErrorView)
+      |> put_view(Nimble.ErrorJSON)
       |> render("error.json", error: "You do not have access to this resource.")
       |> halt()
     end

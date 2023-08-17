@@ -1,13 +1,5 @@
 defmodule Nimble.Web do
   @moduledoc false
-  def view do
-    quote do
-      import Nimble.ErrorHelpers
-      import Phoenix.View
-
-      alias Nimble.Router.Helpers, as: Routes
-    end
-  end
 
   def model do
     quote do
@@ -24,7 +16,7 @@ defmodule Nimble.Web do
 
   def controller do
     quote do
-      use Phoenix.Controller, namespace: Nimble
+      use Phoenix.Controller, namespace: Nimble, formats: [:json]
 
       import Ecto.Query
       import Plug.Conn
@@ -33,7 +25,7 @@ defmodule Nimble.Web do
     end
   end
 
-  def service do
+  def context do
     quote do
       use Ecto.Schema
 

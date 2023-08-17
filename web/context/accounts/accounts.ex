@@ -1,5 +1,8 @@
 defmodule Nimble.Accounts do
-  @moduledoc false
+  @moduledoc """
+  Defines a context for managing user accounts.
+  """
+  alias Nimble.Accounts
   alias Nimble.Auth.OAuth
   alias Nimble.Repo
   alias Nimble.User
@@ -48,24 +51,32 @@ defmodule Nimble.Accounts do
 
   ## Examples
 
-    iex> register(%{field: value}, :default)
+    iex> register(%{field: value})
     {:ok, %User{}}
 
-    iex> register(%{field: bad_value}, :default)
+    iex> register(%{field: value}, :oauth)
+    {:ok, %User{}}
+
+    iex> register(%{field: bad_value})
     {:error, %Ecto.Changeset{}}
   """
-  def register(attrs, :default) do
-    %User{}
-    |> User.registration_changeset(attrs)
-    |> Repo.insert()
-  end
+  def register(attrs, type \\ :default) do
+    case type do
+      :default ->
+        %User{}
+        |> User.registration_changeset(attrs)
+        |> Repo.insert()
 
-  def register(attrs, :oauth) do
-    attrs = user_from_oauth(attrs)
+      :oauth ->
+        attrs = user_from_oauth(attrs)
 
-    %User{}
-    |> User.oauth_registration_changeset(attrs)
-    |> Repo.insert()
+        %User{}
+        |> User.oauth_registration_changeset(attrs)
+        |> Repo.insert()
+
+      _ ->
+        raise ArgumentError, "Unknown registration type: #{inspect(type)}"
+    end
   end
 
   defp user_from_oauth(attrs) do
@@ -143,7 +154,7 @@ defmodule Nimble.Accounts do
 
     Ecto.Multi.new()
     |> Ecto.Multi.update(:user, changeset)
-    |> Ecto.Multi.delete_all(:tokens, UserToken.user_and_contexts_query(user, [context]))
+    |> Ecto.Multi.delete_all(:tokens, Accounts.Query.user_and_contexts_query(user, [context]))
   end
 
   @doc """
@@ -177,7 +188,7 @@ defmodule Nimble.Accounts do
 
     Ecto.Multi.new()
     |> Ecto.Multi.update(:user, changeset)
-    |> Ecto.Multi.delete_all(:tokens, UserToken.user_and_contexts_query(user, :all))
+    |> Ecto.Multi.delete_all(:tokens, Accounts.Query.user_and_contexts_query(user, :all))
     |> Repo.transaction()
     |> case do
       {:ok, %{user: user}} -> {:ok, user}
@@ -208,7 +219,7 @@ defmodule Nimble.Accounts do
     |> Ecto.Multi.update(:user, User.confirm_changeset(user))
     |> Ecto.Multi.delete_all(
       :tokens,
-      user |> UserToken.user_and_contexts_query(["confirm"]) |> Ecto.Query.exclude(:order_by)
+      user |> Accounts.Query.user_and_contexts_query(["confirm"]) |> Ecto.Query.exclude(:order_by)
     )
   end
 
@@ -261,7 +272,7 @@ defmodule Nimble.Accounts do
   def reset_user_password(user, attrs) do
     Ecto.Multi.new()
     |> Ecto.Multi.update(:user, User.password_changeset(user, attrs))
-    |> Ecto.Multi.delete_all(:tokens, UserToken.user_and_contexts_query(user, :all))
+    |> Ecto.Multi.delete_all(:tokens, Accounts.Query.user_and_contexts_query(user, :all))
     |> Repo.transaction()
     |> case do
       {:ok, %{user: user}} -> {:ok, user}
@@ -302,7 +313,7 @@ defmodule Nimble.Accounts do
   Deletes the current session token without validation.
   """
   def delete_session_token(token) do
-    Repo.delete_all(UserToken.token_and_context_query(token, "session"))
+    Repo.delete_all(Accounts.Query.token_and_context_query(token, "session"))
     :ok
   end
 
@@ -312,7 +323,7 @@ defmodule Nimble.Accounts do
   def delete_session_token(%User{} = user, tracking_id, current_token) do
     with %{token: token} <- find_session(user, tracking_id: tracking_id),
          true <- token != current_token,
-         _ <- Repo.delete_all(UserToken.user_and_tracking_id_query(user, tracking_id)) do
+         _ <- Repo.delete_all(Accounts.Query.user_and_tracking_id_query(user, tracking_id)) do
       :ok
     else
       false ->
@@ -327,21 +338,21 @@ defmodule Nimble.Accounts do
   Deletes all session tokens except current session.
   """
   def delete_session_tokens(%User{} = user, token) do
-    Repo.delete_all(UserToken.user_and_session_tokens(user, token))
+    Repo.delete_all(Accounts.Query.user_and_session_tokens(user, token))
     find_session(user, token: token)
   end
 
   @doc """
   Returns all tokens for the given user.
   """
-  def find_all(user), do: Repo.all(UserToken.user_and_contexts_query(user, :all))
-  def find_all_sessions(user), do: Repo.all(UserToken.user_and_contexts_query(user, ["session"]))
+  def find_all(user), do: Repo.all(Accounts.Query.user_and_contexts_query(user, :all))
+  def find_all_sessions(user), do: Repo.all(Accounts.Query.user_and_contexts_query(user, ["session"]))
 
   def find_session(user, tracking_id: id) do
-    Repo.one(UserToken.user_and_tracking_id_query(user, id))
+    Repo.one(Accounts.Query.user_and_tracking_id_query(user, id))
   end
 
   def find_session(%User{} = user, token: token) do
-    Repo.one(UserToken.user_and_token_query(user, token))
+    Repo.one(Accounts.Query.user_and_token_query(user, token))
   end
 end
