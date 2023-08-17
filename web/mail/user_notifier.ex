@@ -47,7 +47,7 @@ defmodule Nimble.UserNotifier do
   @doc """
   Deliver instructions to reset a user password.
   """
-  def deliver_reset_password_instructions(user, token) do
+  def deliver_password_reset_instructions(user, token) do
     deliver(user.email, "Reset password instructions", """
 
     ==============================

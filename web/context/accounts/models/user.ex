@@ -2,6 +2,7 @@ defmodule Nimble.User do
   @moduledoc """
   Defines a User model to track and authenticate users across the application.
   """
+  @derive {Inspect, except: [:password]}
 
   use Nimble.Web, :model
 
