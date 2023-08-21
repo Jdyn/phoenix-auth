@@ -14,14 +14,14 @@ defmodule Nimble.AccountsTest do
 
       assert %{
                password: ["can't be blank"],
-               email: ["can't be blank"],
-               first_name: ["can't be blank"],
-               last_name: ["can't be blank"]
+               identifier: ["can't be blank"],
+               full_name: ["can't be blank"],
+               username: ["can't be blank"],
              } = errors_on(changeset)
     end
 
     test "validates email and password when given" do
-      attrs = %{email: "not valid", password: "not valid", first_name: "John", last_name: "Doe"}
+      attrs = %{identifier: "not valid", username: "johndoe123", password: "not valid", full_name: "John Doe"}
 
       {:error, changeset} =
         Accounts.register(attrs)
@@ -38,24 +38,24 @@ defmodule Nimble.AccountsTest do
 
     test "validates maximum values for email and password for security" do
       too_long = String.duplicate("db", 100)
-      {:error, changeset} = Accounts.register(%{email: too_long, password: too_long})
+      {:error, changeset} = Accounts.register(%{identifier: too_long, password: too_long})
       assert "should be at most 80 character(s)" in errors_on(changeset).email
       assert "should be at most 80 character(s)" in errors_on(changeset).password
     end
 
     test "validates email uniqueness" do
       %{email: email} = user_fixture()
-      {:error, changeset} = Accounts.register(%{email: email})
+      {:error, changeset} = Accounts.register(%{identifier: email})
       assert "has already been taken" in errors_on(changeset).email
 
       # Now try with the upper cased email too, to check that email case is ignored.
-      {:error, changeset} = Accounts.register(%{email: String.upcase(email)})
+      {:error, changeset} = Accounts.register(%{identifier: String.upcase(email)})
       assert "has already been taken" in errors_on(changeset).email
     end
 
     test "registers users with a hashed password" do
       email = unique_user_email()
-      {:ok, user} = Accounts.register(valid_user_attributes(email: email))
+      {:ok, user} = Accounts.register(valid_user_attributes(identifier: email))
       assert user.email == email
       assert is_binary(user.password_hash)
       assert is_nil(user.confirmed_at)

@@ -2,13 +2,13 @@ defmodule Nimble.Users do
   @moduledoc false
   use Nimble.Web, :context
 
-  alias Nimble.UserNotifier
   alias Nimble.Accounts.Query
   alias Nimble.Repo
   alias Nimble.User
+  alias Nimble.UserNotifier
   alias Nimble.UserToken
 
-        @doc """
+  @doc """
   Delivers the confirmation email instructions to the given user.
 
   ## Examples
@@ -28,7 +28,7 @@ defmodule Nimble.Users do
     end
   end
 
-    @doc """
+  @doc """
   Delivers the update email instructions to the given user.
 
   ## Examples
@@ -89,7 +89,7 @@ defmodule Nimble.Users do
     |> Ecto.Multi.delete_all(:tokens, Query.user_and_contexts_query(user, [context]))
   end
 
-      @doc ~S"""
+  @doc ~S"""
   Delivers the reset password email to the given user.
 
   ## Examples
@@ -129,35 +129,42 @@ defmodule Nimble.Users do
   end
 
   @doc """
-  Gets a user by email and password.
+  Gets a user by their email OR phone number, and password.
 
   ## Examples
 
-      iex> get_by_email_and_password("foo@example.com", "correct_password")
+      iex> get_by_identifier_and_password("foo@example.com", "correct_password")
       %User{}
 
-      iex> get_by_email_and_password("foo@example.com", "invalid_password")
+      iex> get_by_identifier_and_password("+11234560000", "correct_password")
+      %User{}
+
+      iex> get_by_identifier_and_password("foo@example.com", "invalid_password")
       nil
 
   """
-  def get_by_email_and_password(email, password) when is_binary(email) and is_binary(password) do
-    user = get_by_email(email)
+  def get_by_identifier_and_password(identifier, password) when is_binary(identifier) and is_binary(password) do
+    user = get_by_identifier(identifier)
     if User.valid_password?(user, password), do: user
   end
 
   @doc """
-  Gets a user by email.
+  Gets a user by their email OR phone number only.
 
-  ## Examples
+  ## Examples`
 
     iex> get_user_by_email("foo@example.com")
+    %User{}
+
+    iex> get_user_by_email("+11234560000")
     %User{}
 
     iex> get_user_by_email("unknown@example.com")
     nil
 
   """
-  def get_by_email(email) when is_binary(email), do: Repo.get_by(User, email: email)
+  def get_by_identifier(identifier) when is_binary(identifier),
+    do: Repo.one(from(u in User, where: u.email == ^identifier or u.phone == ^identifier))
 
   @doc """
   Updates the user password.

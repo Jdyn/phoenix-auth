@@ -29,7 +29,8 @@ defmodule Nimble.UserJSON do
   def user(%User{} = user) do
     %{
       id: user.id,
-      firstName: user.first_name,
+      fullName: user.full_name,
+      phone: user.phone,
       email: user.email,
       confirmedAt: user.confirmed_at,
       isAdmin: user.is_admin

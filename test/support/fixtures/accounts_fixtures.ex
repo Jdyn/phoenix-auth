@@ -9,10 +9,10 @@ defmodule Nimble.AccountsFixtures do
 
   def valid_user_attributes(attrs \\ %{}) do
     Enum.into(attrs, %{
-      email: unique_user_email(),
+      identifier: unique_user_email(),
       password: valid_user_password(),
-      first_name: "John",
-      last_name: "Doe"
+      username: "johndoe123",
+      full_name: "John Doe",
     })
   end
 

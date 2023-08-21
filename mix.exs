@@ -41,6 +41,7 @@ defmodule Nimble.MixProject do
       {:jason, "~> 1.4.1"},
       {:finch, "~> 0.16.0"},
       {:cors_plug, "~> 3.0.3"},
+      {:ex_phone_number, "~>0.4.2"},
       {:pbkdf2_elixir, "~> 2.1.0"},
       {:plug_cowboy, "~> 2.6.1"}
     ]

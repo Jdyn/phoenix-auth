@@ -2,24 +2,29 @@ defmodule Nimble.User do
   @moduledoc """
   Defines a User model to track and authenticate users across the application.
   """
-  @derive {Inspect, except: [:password]}
-
   use Nimble.Web, :model
 
   alias Nimble.Repo
   alias Nimble.User
   alias Nimble.UserToken
+  alias Nimble.Util.PhoneNumber
 
-  @registration_fields ~w(email first_name last_name)a
+  @derive {Inspect, except: [:password]}
+
+  @registration_fields ~w(identifier username full_name)a
+  @update_fields ~w(email phone username full_name)a
+  @email_regex ~r/^[^\s]+@[^\s]+$/
 
   schema "users" do
-    field(:email, :string)
-    field(:first_name, :string)
-    field(:last_name, :string)
-    field(:role, :string, default: "user")
-    field(:avatar, :string)
+    # Field used to accept an email OR phone to create an account.
+    # It is not stored in the database.
+    field(:identifier, :string, virtual: true)
 
+    field(:email, :string)
     field(:phone, :string)
+    field(:username, :string)
+    field(:full_name, :string)
+    field(:avatar, :string)
 
     field(:password_hash, :string)
     field(:password, :string, virtual: true)
@@ -42,17 +47,18 @@ defmodule Nimble.User do
   """
   def registration_changeset(%User{} = user, attrs) do
     user
-    |> cast(attrs, @registration_fields ++ [:password])
-    |> validate_required(@registration_fields ++ [:password])
-    |> validate_email()
+    |> cast(attrs, [:identifier, :username, :full_name, :password])
+    |> validate_required([:identifier, :username, :full_name, :password])
+    |> validate_identifier()
     |> validate_password()
+    |> check_constraint(:users, name: :validate_email_or_phone)
   end
 
   def update_changeset(%User{} = user, attrs) do
     user
-    |> cast(attrs, @registration_fields)
-    |> validate_required(@registration_fields)
-    |> validate_email()
+    |> cast(attrs, @update_fields)
+    |> validate_required(@update_fields)
+    |> validate_identifier()
   end
 
   def oauth_registration_changeset(%User{} = user, attrs) do
@@ -62,14 +68,50 @@ defmodule Nimble.User do
     |> confirm_oauth_email(attrs.email_verified)
   end
 
+  defp validate_identifier(changeset) do
+    identifier = get_change(changeset, :identifier)
+
+    if is_nil(identifier) do
+      validate_required(changeset, [:identifier])
+    else
+      with {:ok, _} <- PhoneNumber.parse_phone_number(identifier) do
+        validate_phone(changeset)
+      else
+        _ -> validate_email(changeset)
+      end
+    end
+  end
+
   defp validate_email(changeset) do
     changeset
+    |> put_change(:email, get_change(changeset, :identifier) || get_change(changeset, :email))
     |> validate_required([:email])
     |> update_change(:email, &String.downcase(&1))
     |> validate_format(:email, ~r/^[^\s]+@[^\s]+$/, message: "must have the @ sign and no spaces")
     |> validate_length(:email, max: 80)
     |> unsafe_validate_unique(:email, Repo)
     |> unique_constraint(:email)
+  end
+
+  defp validate_phone(changeset) do
+    phone = get_change(changeset, :identifier)
+
+    with {:ok, phone_number} <- PhoneNumber.parse_phone_number(phone),
+         true <- PhoneNumber.possible_phone?(phone_number),
+         true <- PhoneNumber.valid_phone?(phone_number) do
+      phone_number = PhoneNumber.format_phone_number(phone_number, :e164)
+
+      changeset
+      |> put_change(:phone, phone_number)
+      |> validate_required([:phone])
+      |> validate_length(:phone, max: 25)
+      |> unsafe_validate_unique(:phone, Repo)
+      |> unique_constraint(:phone)
+    else
+      {:error, message} -> add_error(changeset, :phone, message)
+      _ -> add_error(changeset, :phone, "That's not a valid
+                           phone number or it's missing your country code.")
+    end
   end
 
   defp validate_password(changeset) do

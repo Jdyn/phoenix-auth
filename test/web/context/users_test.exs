@@ -8,32 +8,32 @@ defmodule Nimble.UsersTest do
   alias Nimble.Users
   alias Nimble.UserToken
 
-  describe "get_by_email/1" do
+  describe "get_by_identifier/1" do
     test "does not return the user if the email does not exist" do
-      refute Users.get_by_email("unknown@example.com")
+      refute Users.get_by_identifier("unknown@example.com")
     end
 
     test "returns the user if the email exists" do
       %{id: id} = user = user_fixture()
-      assert %User{id: ^id} = Users.get_by_email(user.email)
+      assert %User{id: ^id} = Users.get_by_identifier(user.email)
     end
   end
 
-  describe "get_by_email_and_password/2" do
+  describe "get_by_identifier_and_password/2" do
     test "does not return the user if the email does not exist" do
-      refute Users.get_by_email_and_password("unknown@example.com", "hello world!")
+      refute Users.get_by_identifier_and_password("unknown@example.com", "hello world!")
     end
 
     test "does not return the user if the password is not valid" do
       user = user_fixture()
-      refute Users.get_by_email_and_password(user.email, "invalid")
+      refute Users.get_by_identifier_and_password(user.email, "invalid")
     end
 
     test "returns the user if the email and password are valid" do
       %{id: id} = user = user_fixture()
 
       assert %User{id: ^id} =
-               Users.get_by_email_and_password(user.email, valid_user_password())
+               Users.get_by_identifier_and_password(user.email, valid_user_password())
     end
   end
 
@@ -174,7 +174,7 @@ defmodule Nimble.UsersTest do
         })
 
       assert is_nil(user.password)
-      assert Users.get_by_email_and_password(user.email, "New valid password 123")
+      assert Users.get_by_identifier_and_password(user.email, "New valid password 123")
     end
 
     test "deletes all tokens for the given user", %{user: user} do
@@ -220,7 +220,7 @@ defmodule Nimble.UsersTest do
     test "updates the password", %{user: user} do
       {:ok, updated_user} = Users.reset_password(user, %{password: "New valid password 123"})
       assert is_nil(updated_user.password)
-      assert Users.get_by_email_and_password(user.email, "New valid password 123")
+      assert Users.get_by_identifier_and_password(user.email, "New valid password 123")
     end
 
     test "deletes all tokens for the given user", %{user: user} do

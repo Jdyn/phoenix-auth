@@ -9,8 +9,8 @@ defmodule Nimble.Accounts do
   alias Nimble.Users
   alias Nimble.UserToken
 
-  def authenticate(email, password) when is_binary(email) and is_binary(password) do
-    with %User{} = user <- Users.get_by_email_and_password(email, password) do
+  def authenticate(identifier, password) when is_binary(identifier) and is_binary(password) do
+    with %User{} = user <- Users.get_by_identifier_and_password(identifier, password) do
       {:ok, user}
     else
       _ ->
@@ -21,7 +21,7 @@ defmodule Nimble.Accounts do
   def authenticate(provider, %{} = params) when is_binary(provider) and is_map(params) do
     case OAuth.callback(provider, params) do
       {:ok, %{user: open_user, token: _token}} ->
-        with user = %User{} <- Users.get_by_email(open_user["email"]),
+        with user = %User{} <- Users.get_by_identifier(open_user["email"]),
              false <- is_nil(user.confirmed_at) do
           {:ok, user}
         else

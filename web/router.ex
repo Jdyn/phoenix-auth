@@ -20,6 +20,7 @@ defmodule Nimble.Router do
     resources("/account", UserController, singleton: true, only: []) do
       post("/signup", UserController, :sign_up)
       post("/signin", UserController, :sign_in)
+
       get("/:provider/request", UserController, :provider_request)
       get("/:provider/callback", UserController, :provider_callback)
 

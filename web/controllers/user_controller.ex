@@ -74,9 +74,8 @@ defmodule Nimble.UserController do
   It renews the session ID and clears the whole session
   to avoid fixation attacks.
   """
-  def sign_in(conn, %{"email" => email, "password" => password} = _params) do
-    with {:ok, user} <- Accounts.authenticate(email, password),
-         nil <- get_session(conn, :user_token) do
+  def sign_in(conn, %{"identifier" => identifier, "password" => password} = _params) do
+    with {:ok, user} <- Accounts.authenticate(identifier, password) do
       token = Accounts.create_session_token(user)
 
       conn
@@ -132,7 +131,7 @@ defmodule Nimble.UserController do
   def send_email_confirmation(conn, _params) do
     current_user = conn.assigns[:current_user]
 
-    with user <- Users.get_by_email(current_user.email),
+    with user <- Users.get_by_identifier(current_user.email),
          {:ok, _token} <- Users.deliver_email_confirmation_instructions(user) do
       json(conn, %{ok: true})
     end
@@ -168,7 +167,7 @@ defmodule Nimble.UserController do
   end
 
   def send_reset_password(conn, %{"email" => email}) do
-    if user = Users.get_by_email(email) do
+    if user = Users.get_by_identifier(email) do
       Users.deliver_password_reset_instructions(user)
     end
 
