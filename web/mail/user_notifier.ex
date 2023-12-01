@@ -31,13 +31,13 @@ defmodule Nimble.UserNotifier do
     <p>
       You can confirm your account by visiting the URL below:
     </p>
-
+    
     <p>
       <a href="#{@delivery_url}/account/email/confirm/#{token}">
         #{@delivery_url}/account/email/confirm/#{token}
       </a>
     </p>
-
+    
     <p>
       If you didn't create an account with us, please ignore this.
     </p>
@@ -49,21 +49,21 @@ defmodule Nimble.UserNotifier do
   """
   def deliver_password_reset_instructions(user, token) do
     deliver(user.email, "Reset password instructions", """
-
+    
     ==============================
-
+    
     Hi #{user.email},
-
+    
     You can reset your password by visiting the URL below:
-
+    
     <p>
       <a href="#{@delivery_url}/user/password/update/#{token}">
         #{@delivery_url}/user/password/update/#{token}
       </a>
     </p>
-
+    
     If you didn't request this change, please ignore this.
-
+    
     ==============================
     """)
   end
@@ -73,21 +73,21 @@ defmodule Nimble.UserNotifier do
   """
   def deliver_user_update_email_instructions(user, token) do
     deliver(user.email, "Update email instructions", """
-
+    
     ==============================
-
+    
     Hi #{user.email},
-
+    
     You can change your email by visiting the URL below:
-
+    
     <p>
       <a href="#{@delivery_url}/user/email/update/#{token}">
         #{@delivery_url}/user/email/update/#{token}
       </a>
     </p>
-
+    
     If you didn't request this change, please ignore this.
-
+    
     ==============================
     """)
   end

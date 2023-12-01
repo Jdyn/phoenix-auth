@@ -22,21 +22,17 @@ defmodule Nimble.Accounts do
   end
 
   def authenticate(provider, %{} = params) when is_binary(provider) and is_map(params) do
-    case OAuth.callback(provider, params) do
-      {:ok, %{user: open_user, token: _token}} ->
-        with %User{} = user <- get_by_email(open_user["email"]),
-             false <- is_nil(user.confirmed_at) do
-          {:ok, user}
-        else
-          true ->
-            {:not_found, "Confirm your email before signing in with #{provider}."}
+    with {:ok, %{user: open_user, token: _token}} <- OAuth.callback(provider, params) do
+      with %User{} = user <- get_by_email(open_user["email"]),
+           false <- is_nil(user.confirmed_at) do
+        {:ok, user}
+      else
+        true ->
+          {:not_found, "Confirm your email before signing in with #{provider}."}
 
-          nil ->
-            register(open_user, :oauth)
-        end
-
-      error ->
-        error
+        nil ->
+          register(open_user, :oauth)
+      end
     end
   end
 

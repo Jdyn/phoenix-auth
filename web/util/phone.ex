@@ -6,7 +6,7 @@ defmodule Nimble.Util.Phone do
 
   @doc """
   Parses a given phone number string.
-
+  
     ## Example
       iex > {:ok, phone_number} = ExPhoneNumber.parse("044 668 18 00", "CH")
       {:ok,
