@@ -19,6 +19,7 @@ defmodule Nimble.ConnCase do
 
   using do
     quote do
+      use Nimble.Web, :controller
       # Import conveniences for testing with connections
       import Nimble.ConnCase
       import Phoenix.ConnTest
@@ -52,7 +53,7 @@ defmodule Nimble.ConnCase do
   It returns an updated `conn`.
   """
   def log_in_user(conn, user) do
-    token = Nimble.Accounts.create_session_token(user)
+    token = Nimble.Sessions.create_session_token(user)
 
     conn
     |> Phoenix.ConnTest.init_test_session(%{})

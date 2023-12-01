@@ -4,15 +4,16 @@ defmodule Nimble.AccountsFixtures do
   entities via the `Nimble.Accounts` context.
   """
 
+  def unique_username, do: "John#{Enum.random(0..1000)}"
   def unique_user_email, do: "user#{System.unique_integer()}@example.com"
-  def valid_user_password, do: "Password123!"
+  def valid_user_password, do: "Password1234!"
 
   def valid_user_attributes(attrs \\ %{}) do
     Enum.into(attrs, %{
-      email: unique_user_email(),
+      identifier: unique_user_email(),
       password: valid_user_password(),
-      first_name: "John",
-      last_name: "Doe"
+      username: unique_username(),
+      full_name: "John Doe"
     })
   end
 

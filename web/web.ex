@@ -22,6 +22,8 @@ defmodule Nimble.Web do
       import Plug.Conn
 
       alias Nimble.Router.Helpers, as: Routes
+
+      def current_user(conn), do: conn.assigns[:current_user]
     end
   end
 

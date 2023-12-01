@@ -4,7 +4,7 @@ import Config
 config :nimble, Nimble.Repo,
   username: "postgres",
   password: "postgres",
-  database: "nimble_dev",
+  database: "auth_dev",
   hostname: "localhost",
   show_sensitive_data_on_connection_error: true,
   pool_size: 10

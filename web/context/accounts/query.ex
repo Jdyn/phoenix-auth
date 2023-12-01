@@ -53,4 +53,8 @@ defmodule Nimble.Accounts.Query do
   def user_and_token_query(%{id: id} = %User{}, token) do
     from(t in UserToken, where: t.user_id == ^id and t.token == ^token)
   end
+
+  def user_from_identifier_query(identifier) do
+    from(u in User, where: u.email == ^identifier or u.phone == ^identifier or u.username == ^identifier)
+  end
 end

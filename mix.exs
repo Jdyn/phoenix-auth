@@ -37,12 +37,13 @@ defmodule Nimble.MixProject do
       {:postgrex, "~> 0.17.2"},
       {:swoosh, "~> 1.11.5"},
       {:assent, "~> 0.2.3"},
-      {:styler, "~> 0.8.4", only: [:dev, :test], runtime: false},
+      {:styler, "~> 0.10.2", only: [:dev, :test], runtime: false},
       {:jason, "~> 1.4.1"},
       {:finch, "~> 0.16.0"},
       {:cors_plug, "~> 3.0.3"},
       {:pbkdf2_elixir, "~> 2.1.0"},
-      {:plug_cowboy, "~> 2.6.1"}
+      {:plug_cowboy, "~> 2.6.1"},
+      {:ex_phone_number, "~>0.4.2"}
     ]
   end
 

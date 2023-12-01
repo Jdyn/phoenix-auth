@@ -6,7 +6,7 @@ defmodule Nimble.Repo.Migrations.CreateUsers do
       add(:email, :string, null: false)
       add(:first_name, :string)
       add(:last_name, :string)
-      add(:role, :string, default: "user")
+      add(:username, :string)
       add(:avatar, :string)
 
       add(:phone, :string)
@@ -19,7 +19,9 @@ defmodule Nimble.Repo.Migrations.CreateUsers do
       timestamps()
     end
 
+    create(constraint(:users, :valid_identifier, check: "num_nulls(email, phone) <= 1"))
     create unique_index(:users, [:email])
+    create unique_index(:users, [:phone])
 
   end
 end
