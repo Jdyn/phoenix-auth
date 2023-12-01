@@ -40,8 +40,9 @@ defmodule Nimble.Router do
 
       post("/password/update", AccountController, :update_password)
 
-      get("/sessions", SessionController, :show)
-      delete("/sessions/clear", SessionController, :delete_all)
+      get("/session", SessionController, :show)
+      get("/sessions", SessionController, :index)
+      delete("/sessions", SessionController, :delete_all)
       delete("/sessions/:id", SessionController, :delete)
 
       delete("/signout", AccountController, :sign_out)

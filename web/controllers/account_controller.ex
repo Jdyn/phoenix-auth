@@ -19,7 +19,7 @@ defmodule Nimble.AccountController do
     conn
     |> put_remember_token(token)
     |> configure_session(renew: true)
-    |> render(:show, user: conn.assigns[:current_user])
+    |> render(:show, user: current_user(conn))
   end
 
   @doc """
@@ -44,21 +44,22 @@ defmodule Nimble.AccountController do
   to avoid fixation attacks.
   """
   def sign_in(conn, %{"identifier" => identifier, "password" => password} = _params) do
-    with {:ok, user} <- Accounts.authenticate(identifier, password),
-         nil <- get_session(conn, :user_token) do
-      token = Sessions.create_session_token(user)
+    with {:ok, user} <- Accounts.authenticate(identifier, password) do
+      # If the user made the request within a
+      # session, just keep their current session.
+      if get_session(conn, :user_token) do
+        dbg("skipping")
+        render(conn, :show, user: user)
+      else
+        token = Sessions.create_session_token(user)
+        dbg("creating")
 
-      conn
-      |> renew_session()
-      |> put_session(:user_token, token)
-      |> put_remember_token(token)
-      |> render(:show, user: user)
-    else
-      nil ->
-        {:unauthorized, "You are already signed in."}
-
-      error ->
-        error
+        conn
+        |> renew_session()
+        |> put_session(:user_token, token)
+        |> put_remember_token(token)
+        |> render(:show, user: user)
+      end
     end
   end
 
@@ -99,7 +100,7 @@ defmodule Nimble.AccountController do
   end
 
   def send_email_confirmation(conn, _params) do
-    current_user = conn.assigns[:current_user]
+    current_user = current_user(conn)
 
     with user <- Accounts.get_by_email(current_user.email),
          {:ok, _token} <- Accounts.deliver_email_confirmation_instructions(user) do
@@ -129,7 +130,7 @@ defmodule Nimble.AccountController do
   end
 
   def do_update_email(conn, %{"token" => token}) do
-    with :ok <- Accounts.update_email(conn.assigns[:current_user], token) do
+    with :ok <- Accounts.update_email(current_user(conn), token) do
       conn
       |> put_status(:ok)
       |> json(%{data: "Email changed successfully."})
@@ -160,7 +161,7 @@ defmodule Nimble.AccountController do
   - If the `current password` is correct, it updates the password.
   """
   def update_password(conn, %{"current_password" => old_password, "user" => new_user} = _params) do
-    current_user = conn.assigns[:current_user]
+    current_user = current_user(conn)
 
     with {:ok, _user} <- Accounts.update_password(current_user, old_password, new_user) do
       json(conn, %{data: "Password changed successfully."})

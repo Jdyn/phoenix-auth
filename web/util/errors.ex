@@ -9,8 +9,8 @@ defmodule Nimble.Errors do
   def translate_error({msg, opts}) do
     # Because the error messages we show in our forms and APIs
     # are defined inside Ecto, we need to translate them dynamically.
-    Enum.reduce(opts, msg, fn {key, value}, acc ->
-      String.replace(acc, "%{#{key}}", to_string(value))
+    Enum.reduce(opts, msg, fn {key, _value}, acc ->
+      String.replace(acc, "%{#{key}}", "error")
     end)
   end
 end

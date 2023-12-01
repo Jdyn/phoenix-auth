@@ -5,7 +5,7 @@ defmodule Nimble.MixProject do
     [
       app: :nimble,
       version: "0.1.0",
-      elixir: "~> 1.15.4",
+      elixir: "~> 1.15.7",
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: Mix.compilers(),
       start_permanent: Mix.env() == :prod,
@@ -43,7 +43,8 @@ defmodule Nimble.MixProject do
       {:cors_plug, "~> 3.0.3"},
       {:pbkdf2_elixir, "~> 2.1.0"},
       {:plug_cowboy, "~> 2.6.1"},
-      {:ex_phone_number, "~>0.4.2"}
+      {:ex_phone_number, "~>0.4.2"},
+      {:bandit, "~> 1.0"}
     ]
   end
 

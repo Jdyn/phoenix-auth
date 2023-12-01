@@ -57,7 +57,7 @@ defmodule Nimble.Sessions do
       :ok
     else
       false ->
-        {:not_found, "Cannot delete the current session."}
+        {:unauthorized, "Cannot delete the current session."}
 
       nil ->
         {:unauthorized, "Session does not exist."}

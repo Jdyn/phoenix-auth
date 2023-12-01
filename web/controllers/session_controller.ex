@@ -3,21 +3,31 @@ defmodule Nimble.SessionController do
 
   alias Nimble.Sessions
 
+  action_fallback(Nimble.ErrorController)
+
   @doc """
   Shows all sessions associated with a user.
   """
-  def show(conn, _params) do
-    current_user = conn.assigns[:current_user]
+  def index(conn, _params) do
+    current_user = current_user(conn)
 
-    tokens = Sessions.find_all_sessions(current_user)
-    render(conn, :sessions, tokens: tokens)
+    render(conn, :index, tokens: Sessions.find_all_sessions(current_user))
+  end
+
+  @doc """
+  Shows the current session that the user is requesting from user.
+  """
+  def show(conn, _params) do
+    user = current_user(conn)
+    token = get_session(conn, :user_token)
+    render(conn, :show, token: Sessions.find_session(user, token: token), user: user)
   end
 
   @doc """
   Deletes a session associated with a user.
   """
-  def delete(conn, %{"id" => tracking_id}) do
-    user = conn.assigns[:current_user]
+  def delete(conn, %{"tracking_id" => tracking_id}) do
+    user = current_user(conn)
     token = get_session(conn, :user_token)
 
     with :ok <- Sessions.delete_session_token(user, tracking_id, token) do
@@ -25,12 +35,15 @@ defmodule Nimble.SessionController do
     end
   end
 
+  @doc """
+  Deletes all sessions associated with a user, except the current one.
+  """
   def delete_all(conn, _params) do
-    user = conn.assigns[:current_user]
+    user = current_user(conn)
     token = get_session(conn, :user_token)
 
     with token <- Sessions.delete_session_tokens(user, token) do
-      render(conn, :sessions, tokens: [token])
+      render(conn, :index, tokens: [token])
     end
   end
 end

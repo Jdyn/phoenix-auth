@@ -12,6 +12,7 @@ config :nimble,
 
 # Configures the endpoint
 config :nimble, Nimble.Endpoint,
+  adapter: Bandit.PhoenixAdapter,
   url: [host: "localhost"],
   secret_key_base: "hbfYDlpG/H+OUeyXAdH3v71oxfA504VjHz/LWlmJS0f4u/c9HxHpBdGhSa+TyLd2",
   render_errors: [view: Nimble.ErrorView, accepts: ~w(json), layout: false],
