@@ -11,8 +11,8 @@ defmodule Nimble.User do
 
   @derive {Inspect, except: [:password]}
 
-  @registration_fields ~w(identifier username full_name)a
-  @update_fields ~w(email phone username full_name)a
+  @registration_fields ~w(identifier username first_name last_name)a
+  @update_fields ~w(email phone username first_name last_name)a
   @email_regex ~r/^[\w+\-.]+@[a-z\d\-]+(\.[a-z]+)*\.[a-z]+$/i
 
   schema "users" do
@@ -46,8 +46,8 @@ defmodule Nimble.User do
     |> validate_username()
     |> validate_password()
     |> validate_identifier()
-    |> maybe_validate_email()
-    |> maybe_validate_phone()
+    |> constrain_key(:email)
+    |> constrain_key(:phone)
     |> check_constraint(:identifier, name: :valid_identifier, message: "Could not ensure a valid email or phone")
   end
 
@@ -55,7 +55,7 @@ defmodule Nimble.User do
     user
     |> cast(attrs, @registration_fields)
     |> validate_required(@registration_fields)
-    |> confirm_oauth_email(attrs.email_verified)
+    |> confirm_changeset()
   end
 
   def update_changeset(%User{} = user, attrs) do
@@ -93,13 +93,15 @@ defmodule Nimble.User do
     |> validate_length(:email, max: 80)
   end
 
-  defp maybe_validate_email(changeset) do
-    if get_change(changeset, :email) do
-      changeset
-      |> unsafe_validate_unique(:email, Repo)
-      |> unique_constraint(:email)
-    else
-      changeset
+  defp constrain_key(changeset, key) do
+    case get_change(changeset, key) do
+      nil ->
+        changeset
+
+      _value ->
+        changeset
+        |> unsafe_validate_unique(key, Repo)
+        |> unique_constraint(key)
     end
   end
 
@@ -117,16 +119,6 @@ defmodule Nimble.User do
     else
       {:error, message} -> add_error(changeset, :phone, message)
       _ -> add_error(changeset, :phone, "That is not a valid United States phone number.")
-    end
-  end
-
-  defp maybe_validate_phone(changeset) do
-    if get_change(changeset, :phone) do
-      changeset
-      |> unsafe_validate_unique(:phone, Repo)
-      |> unique_constraint(:phone)
-    else
-      changeset
     end
   end
 
@@ -197,13 +189,6 @@ defmodule Nimble.User do
     now = NaiveDateTime.truncate(NaiveDateTime.utc_now(), :second)
     change(user_or_changeset, confirmed_at: now)
   end
-
-  def confirm_oauth_email(changeset, true) do
-    now = NaiveDateTime.truncate(NaiveDateTime.utc_now(), :second)
-    change(changeset, confirmed_at: now)
-  end
-
-  def confirm_oauth_email(changeset, false), do: add_error(changeset, :email_verified, "Email not verified")
 
   @doc """
   Verifies the password.

@@ -13,7 +13,8 @@ defmodule Nimble.AccountsFixtures do
       identifier: unique_user_email(),
       password: valid_user_password(),
       username: unique_username(),
-      full_name: "John Doe"
+      first_name: "John",
+      last_name: "Doe"
     })
   end
 

@@ -23,15 +23,15 @@ defmodule Nimble.Accounts do
 
   def authenticate(provider, %{} = params) when is_binary(provider) and is_map(params) do
     with {:ok, %{user: open_user, token: _token}} <- OAuth.callback(provider, params) do
-      with %User{} = user <- get_by_email(open_user["email"]),
-           false <- is_nil(user.confirmed_at) do
-        {:ok, user}
-      else
-        true ->
-          {:not_found, "Confirm your email before signing in with #{provider}."}
-
+      case get_by_email(open_user["email"]) do
         nil ->
           register(open_user, :oauth)
+
+        %User{confirmed_at: true} = user ->
+          {:ok, user}
+
+        %User{confirmed_at: false} ->
+          {:unauthorized, "Confirm your email before signing in with #{provider}."}
       end
     end
   end
@@ -219,10 +219,10 @@ defmodule Nimble.Accounts do
 
   ## Examples
 
-      iex> get_by_email_and_password("foo@example.com", "correct_password")
+      iex> get_by_identifier_and_password("foo@example.com", "correct_password")
       %User{}
 
-      iex> get_by_email_and_password("foo@example.com", "invalid_password")
+      iex> get_by_identifier_and_password("foo@example.com", "invalid_password")
       nil
 
   """
