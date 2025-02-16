@@ -1,7 +1,7 @@
 defmodule Nimble.SessionController do
   use Nimble.Web, :controller
 
-  alias Nimble.Sessions
+  alias Nimble.Accounts.Sessions
 
   action_fallback(Nimble.ErrorController)
 

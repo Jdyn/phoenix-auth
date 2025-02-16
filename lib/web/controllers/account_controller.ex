@@ -2,8 +2,8 @@ defmodule Nimble.AccountController do
   use Nimble.Web, :controller
 
   alias Nimble.Accounts
+  alias Nimble.Accounts.Sessions
   alias Nimble.Auth.OAuth
-  alias Nimble.Sessions
   alias Nimble.User
 
   action_fallback(Nimble.ErrorController)

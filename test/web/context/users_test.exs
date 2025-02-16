@@ -4,7 +4,7 @@ defmodule Nimble.Accounts.AccountsTest do
   import Nimble.AccountsFixtures
 
   alias Nimble.Accounts
-  alias Nimble.Sessions
+  alias Nimble.Accounts.Sessions
   alias Nimble.User
   alias Nimble.UserToken
 

@@ -1,4 +1,4 @@
-defmodule Nimble.Sessions do
+defmodule Nimble.Accounts.Sessions do
   @moduledoc false
   use Nimble.Web, :context
 

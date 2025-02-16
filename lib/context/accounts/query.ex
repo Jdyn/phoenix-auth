@@ -2,7 +2,7 @@ defmodule Nimble.Accounts.Query do
   @moduledoc """
   Defines a module for querying the accounts context.
   """
-  use Nimble.Web, :context
+  use Nimble.Web, :query
 
   alias Nimble.User
   alias Nimble.UserToken

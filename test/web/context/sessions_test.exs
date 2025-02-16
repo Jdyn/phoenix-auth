@@ -3,7 +3,7 @@ defmodule Nimble.SessionsTest do
 
   import Nimble.AccountsFixtures
 
-  alias Nimble.Sessions
+  alias Nimble.Accounts.Sessions
   alias Nimble.UserToken
 
   describe "create_session_token/1" do

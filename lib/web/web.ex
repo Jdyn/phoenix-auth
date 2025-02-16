@@ -44,6 +44,15 @@ defmodule Nimble.Web do
     end
   end
 
+  def query do
+    quote do
+      use Ecto.Schema
+
+      import Ecto
+      import Ecto.Query, only: [from: 1, from: 2]
+    end
+  end
+
   def router do
     quote do
       use Phoenix.Router
