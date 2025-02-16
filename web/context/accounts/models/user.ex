@@ -11,8 +11,10 @@ defmodule Nimble.User do
 
   @derive {Inspect, except: [:password]}
 
-  @registration_fields ~w(identifier username first_name last_name)a
-  @update_fields ~w(email phone username first_name last_name)a
+  @registration_fields ~w(identifier first_name last_name)a
+  @oauth_registration_fields ~w(email first_name last_name confirmed_at avatar)a
+
+  @update_fields ~w(email phone first_name last_name)a
   @email_regex ~r/^[\w+\-.]+@[a-z\d\-]+(\.[a-z]+)*\.[a-z]+$/i
 
   schema "users" do
@@ -20,7 +22,6 @@ defmodule Nimble.User do
 
     field(:email, :string)
     field(:phone, :string)
-    field(:username, :string)
     field(:first_name, :string)
     field(:last_name, :string)
     field(:avatar, :string)
@@ -41,9 +42,8 @@ defmodule Nimble.User do
   """
   def registration_changeset(%User{} = user, attrs) do
     user
-    |> cast(attrs, [:identifier, :username, :password])
-    |> validate_required([:identifier, :username, :password])
-    |> validate_username()
+    |> cast(attrs, @registration_fields)
+    |> validate_required(@registration_fields)
     |> validate_password()
     |> validate_identifier()
     |> constrain_key(:email)
@@ -53,9 +53,9 @@ defmodule Nimble.User do
 
   def oauth_registration_changeset(%User{} = user, attrs) do
     user
-    |> cast(attrs, @registration_fields)
-    |> validate_required(@registration_fields)
-    |> confirm_changeset()
+    |> cast(attrs, @oauth_registration_fields)
+    |> confirm_changeset(verified?: Map.get(attrs, :email_verified, false))
+    |> validate_required(@oauth_registration_fields)
   end
 
   def update_changeset(%User{} = user, attrs) do
@@ -67,17 +67,21 @@ defmodule Nimble.User do
 
   @doc """
   Validates an `identifier` field in the changeset.
-  It determines if the field is an e-mail, phone number or username.
+  It determines if the field is an e-mail or phone number.
   After determining, it calls the appropriate validation function,
-  and puts the identifier in the `email`, `phone` or `username` field.
+  and puts the identifier in the `email` or `phone` field.
   """
   def validate_identifier(%Ecto.Changeset{} = changeset) do
-    identifier = get_change(changeset, :identifier)
+    case get_change(changeset, :identifier) do
+      nil ->
+        add_error(changeset, :identifier, "is required")
 
-    if not is_nil(identifier) and String.match?(identifier, @email_regex) do
-      validate_email(changeset)
-    else
-      validate_phone(changeset)
+      identifier ->
+        if String.match?(identifier, @email_regex) do
+          validate_email(changeset)
+        else
+          validate_phone(changeset)
+        end
     end
   end
 
@@ -106,7 +110,9 @@ defmodule Nimble.User do
   end
 
   defp validate_phone(changeset) do
-    with {:ok, phone} <- Phone.parse(get_change(changeset, :identifier)),
+    phone = get_change(changeset, :identifier)
+
+    with {:ok, phone} <- Phone.parse(phone),
          true <- Phone.possible?(phone),
          true <- Phone.valid?(phone) do
       phone = Phone.format(phone, :e164)
@@ -118,24 +124,8 @@ defmodule Nimble.User do
       |> put_change(:identifier, phone)
     else
       {:error, message} -> add_error(changeset, :phone, message)
-      _ -> add_error(changeset, :phone, "That is not a valid United States phone number.")
+      _ -> add_error(changeset, :phone, "Invalid US phone number provided.")
     end
-  end
-
-  defp validate_username(changeset) do
-    changeset
-    |> validate_format(:username, ~r/^(?!.*[_. ]{2})/,
-      message: "cannot contain consecutive underscores, spaces, or periods"
-    )
-    |> validate_format(:username, ~r/^[^_. ].*[^_. ]$/,
-      message: "cannot start or end with underscores, spaces, or periods"
-    )
-    |> validate_format(:username, ~r/^[a-zA-Z0-9._ ]+$/,
-      message: "can only contain alphanumeric characters, underscores, spaces, and periods"
-    )
-    |> validate_length(:username, min: 3, max: 20)
-    |> unsafe_validate_unique(:username, Repo)
-    |> unique_constraint(:username)
   end
 
   defp validate_password(changeset) do
@@ -185,7 +175,11 @@ defmodule Nimble.User do
   @doc """
   Confirms the account by setting `confirmed_at`.
   """
-  def confirm_changeset(user_or_changeset) do
+  def confirm_changeset(user_or_changeset, opts \\ [{:verified?, true}])
+
+  def confirm_changeset(user_or_changeset, verified?: false), do: user_or_changeset
+
+  def confirm_changeset(user_or_changeset, verified?: true) do
     now = NaiveDateTime.truncate(NaiveDateTime.utc_now(), :second)
     change(user_or_changeset, confirmed_at: now)
   end

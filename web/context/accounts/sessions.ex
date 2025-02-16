@@ -17,7 +17,7 @@ defmodule Nimble.Sessions do
 
   @doc """
   Generates a session token.
-  
+
   ## Examples
       iex> create_session_token(user)
       %UserToken{ ... }
@@ -30,7 +30,7 @@ defmodule Nimble.Sessions do
 
   @doc """
   Deletes the current session token.
-  
+
   ## Examples
       iex> delete_session_token(token)
       :ok
@@ -42,18 +42,18 @@ defmodule Nimble.Sessions do
 
   @doc """
   Deletes the current session token IF the given token is not the current session token.
-  
+
   ## Examples
       iex> delete_session_token(user, tracking_id, current_token)
       :ok
-  
+
       iex> delete_session_token(user, tracking_id_of_current_token, current_token)
       {:not_found, "Cannot delete the current session."}
   """
   def delete_session_token(%User{} = user, tracking_id, current_token) do
     with %{token: token} <- find_session(user, tracking_id: tracking_id),
-         true <- token != current_token,
-         _ <- Repo.delete_all(Query.user_and_tracking_id_query(user, tracking_id)) do
+         true <- token != current_token do
+      Repo.delete_all(Query.user_and_tracking_id_query(user, tracking_id))
       :ok
     else
       false ->

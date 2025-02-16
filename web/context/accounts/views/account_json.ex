@@ -21,7 +21,6 @@ defmodule Nimble.AccountJSON do
       id: user.id,
       email: user.email,
       phone: user.phone,
-      username: user.username,
       confirmedAt: user.confirmed_at
     }
   end

@@ -5,7 +5,7 @@ defmodule Nimble.MixProject do
     [
       app: :nimble,
       version: "0.1.0",
-      elixir: "~> 1.15.7",
+      elixir: "~> 1.18.1",
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: Mix.compilers(),
       start_permanent: Mix.env() == :prod,
@@ -31,20 +31,21 @@ defmodule Nimble.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
-      {:phoenix, "~> 1.7.7"},
-      {:phoenix_ecto, "~> 4.4.2"},
-      {:ecto_sql, "~> 3.10.1"},
-      {:postgrex, "~> 0.17.2"},
-      {:swoosh, "~> 1.11.5"},
-      {:assent, "~> 0.2.3"},
-      {:styler, "~> 0.10.2", only: [:dev, :test], runtime: false},
-      {:jason, "~> 1.4.1"},
-      {:finch, "~> 0.16.0"},
+      {:phoenix, "~> 1.7.19"},
+      {:phoenix_ecto, "~> 4.6.3"},
+      {:ecto_sql, "~> 3.12.1"},
+      {:postgrex, "~> 0.20.0"},
+      {:swoosh, "~> 1.17.10"},
+      {:assent, "~> 0.3.0"},
+      {:styler, "~> 1.3.3", only: [:dev, :test], runtime: false},
+      {:jason, "~> 1.4.4"},
+      {:req, "~> 0.5.8"},
       {:cors_plug, "~> 3.0.3"},
-      {:pbkdf2_elixir, "~> 2.1.0"},
-      {:plug_cowboy, "~> 2.6.1"},
-      {:ex_phone_number, "~>0.4.2"},
-      {:bandit, "~> 1.0"}
+      {:pbkdf2_elixir, "~> 2.3.1"},
+      {:uniq, "~> 0.6.1"},
+      {:plug_cowboy, "~> 2.7.2"},
+      {:ex_phone_number, "~> 0.4.5"},
+      {:bandit, "~> 1.6.7"}
     ]
   end
 

@@ -27,5 +27,6 @@ nimble-*.tar
 
 # Ignore secrets
 */prod.secret.exs
+.env*
 
 .tool-versions

@@ -13,25 +13,19 @@ defmodule Nimble.Accounts do
 
   def authenticate(identifier, password) when is_binary(identifier) and is_binary(password) do
     case get_by_identifier_and_password(identifier, password) do
-      %User{} = user ->
-        {:ok, user}
-
-      _ ->
-        {:unauthorized, "Email or Password is incorrect."}
+      %User{} = user -> {:ok, user}
+      _ -> {:unauthorized, "Email or Password is incorrect."}
     end
   end
 
-  def authenticate(provider, %{} = params) when is_binary(provider) and is_map(params) do
-    with {:ok, %{user: open_user, token: _token}} <- OAuth.callback(provider, params) do
+  def authenticate(provider, params) when is_binary(provider) and is_map(params) do
+    session_params = %{state: Map.get(params, "state")}
+
+    with {:ok, %{user: open_user, token: _token}} <- OAuth.callback(provider, params, session_params) do
       case get_by_email(open_user["email"]) do
-        nil ->
-          register(open_user, :oauth)
-
-        %User{confirmed_at: true} = user ->
-          {:ok, user}
-
-        %User{confirmed_at: false} ->
-          {:unauthorized, "Confirm your email before signing in with #{provider}."}
+        nil -> register(open_user, :oauth)
+        %User{confirmed_at: nil} -> {:unauthorized, "Please confirm your email with #{provider}."}
+        %User{} = user -> {:ok, user}
       end
     end
   end

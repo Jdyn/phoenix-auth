@@ -42,8 +42,7 @@ defmodule Nimble.SessionController do
     user = current_user(conn)
     token = get_session(conn, :user_token)
 
-    with token <- Sessions.delete_session_tokens(user, token) do
-      render(conn, :index, tokens: [token])
-    end
+    token = Sessions.delete_session_tokens(user, token)
+    render(conn, :index, tokens: [token])
   end
 end

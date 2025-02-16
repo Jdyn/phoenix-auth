@@ -42,4 +42,13 @@ defmodule Nimble.ErrorController do
     |> put_view(Nimble.ErrorJSON)
     |> render(:error, error: error.message)
   end
+
+  def call(conn, {:error, %Assent.InvalidResponseError{response: %Assent.HTTPAdapter.HTTPResponse{body: body}}}) do
+    reason = Map.get(body, "error", "An unexpected OAuth error occurred. Please try again.")
+
+    conn
+    |> put_status(:unauthorized)
+    |> put_view(Nimble.ErrorJSON)
+    |> render(:error, error: reason)
+  end
 end

@@ -18,7 +18,7 @@ defmodule Nimble.Accounts.Query do
   @doc """
   Returns all `UserToken` sessions EXCEPT for the session of the `UserToken.token` provided.
   """
-  @spec user_and_session_tokens(User.t(), String.t()) :: Ecto.Query.t()
+  @spec user_and_session_tokens(%User{}, String.t()) :: Ecto.Query.t()
   def user_and_session_tokens(%User{} = user, token) do
     from(t in UserToken,
       where: t.token != ^token and t.user_id == ^user.id and t.context == "session"
@@ -28,7 +28,7 @@ defmodule Nimble.Accounts.Query do
   @doc """
   Gets all tokens for the given user for the given contexts.
   """
-  @spec user_and_contexts_query(User.t(), [String.t()]) :: Ecto.Query.t()
+  @spec user_and_contexts_query(%User{}, [String.t()]) :: Ecto.Query.t()
   def user_and_contexts_query(user, ["all"]) do
     from(t in UserToken, where: t.user_id == ^user.id)
   end
@@ -40,7 +40,7 @@ defmodule Nimble.Accounts.Query do
   @doc """
   Gets the UserToken for the given user and tracking_id.
   """
-  @spec user_and_tracking_id_query(User.t(), String.t()) :: Ecto.Query.t()
+  @spec user_and_tracking_id_query(%User{}, String.t()) :: Ecto.Query.t()
   def user_and_tracking_id_query(%{id: id} = %User{}, tracking_id) do
     from(t in UserToken, where: t.user_id == ^id and t.tracking_id == ^tracking_id)
   end
@@ -48,12 +48,12 @@ defmodule Nimble.Accounts.Query do
   @doc """
   Gets the `UserToken` for the given `User` and token.
   """
-  @spec user_and_token_query(User.t(), String.t()) :: Ecto.Query.t()
+  @spec user_and_token_query(%User{}, String.t()) :: Ecto.Query.t()
   def user_and_token_query(%{id: id} = %User{}, token) do
     from(t in UserToken, where: t.user_id == ^id and t.token == ^token)
   end
 
   def user_from_identifier_query(identifier) do
-    from(u in User, where: u.email == ^identifier or u.phone == ^identifier or u.username == ^identifier)
+    from(u in User, where: u.email == ^identifier or u.phone == ^identifier)
   end
 end

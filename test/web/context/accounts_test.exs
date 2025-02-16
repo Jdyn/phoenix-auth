@@ -14,13 +14,12 @@ defmodule Nimble.AccountsTest do
 
       assert %{
                password: ["can't be blank"],
-               identifier: ["can't be blank"],
-               username: ["can't be blank"]
+               identifier: ["can't be blank"]
              } = errors_on(changeset)
     end
 
     test "validates email and password when given" do
-      attrs = %{identifier: "not valid", username: "johndoe123", password: "not valid"}
+      attrs = %{identifier: "not valid", password: "not valid"}
 
       {:error, changeset} =
         Accounts.register(attrs)

@@ -6,6 +6,6 @@ defmodule Nimble.SessionJSON do
   end
 
   def show(%{token: token, user: user}) do
-    Map.merge(AccountJSON.token(token), %{user: AccountJSON.user(user)})
+    Map.put(AccountJSON.token(token), :user, AccountJSON.user(user))
   end
 end

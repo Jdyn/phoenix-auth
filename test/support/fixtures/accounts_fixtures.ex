@@ -12,7 +12,6 @@ defmodule Nimble.AccountsFixtures do
     Enum.into(attrs, %{
       identifier: unique_user_email(),
       password: valid_user_password(),
-      username: unique_username(),
       first_name: "John",
       last_name: "Doe"
     })

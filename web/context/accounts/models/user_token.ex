@@ -2,7 +2,7 @@ defmodule Nimble.UserToken do
   @moduledoc """
   Defines a UserToken for use with authenticating and verifying User operations
   """
-  use Ecto.Schema
+  use Nimble.Web, :model
 
   import Ecto.Query
 

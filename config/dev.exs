@@ -22,18 +22,17 @@ config :nimble, Nimble.Endpoint,
   check_origin: false,
   watchers: []
 
-config :nimble, Nibmle.Mailer, adapter: Swoosh.Adapters.Local
-config :swoosh, :api_client, false
+config :nimble, Nimble.Mailer, adapter: Swoosh.Adapters.Local
 
 config :nimble, :strategies,
   github: [
-    client_id: "REPLACE_WITH_CLIENT_ID",
-    client_secret: "REPLACE_WITH_CLIENT_SECRET",
+    client_id: {:system, "OAUTH_GITHUB_CLIENT_ID"},
+    client_secret: {:system, "OAUTH_GITHUB_CLIENT_SECRET"},
     strategy: Assent.Strategy.Github
   ],
   google: [
-    client_id: "REPLACE_WITH_CLIENT_ID",
-    client_secret: "REPLACE_WITH_CLIENT_SECRET",
+    client_id: System.get_env("OAUTH_GOOGLE_CLIENT_ID"),
+    client_secret: System.get_env("OAUTH_GOOGLE_CLIENT_SECRET"),
     strategy: Assent.Strategy.Google,
     authorization_params: [
       access_type: "offline",

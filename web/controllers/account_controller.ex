@@ -87,7 +87,6 @@ defmodule Nimble.AccountController do
     with {:ok, user} <- Accounts.authenticate(provider, params) do
       token = get_session(conn, :user_token)
       token && Sessions.delete_session_token(token)
-
       token = Sessions.create_session_token(user)
 
       conn
@@ -102,8 +101,9 @@ defmodule Nimble.AccountController do
   def send_email_confirmation(conn, _params) do
     current_user = current_user(conn)
 
-    with user <- Accounts.get_by_email(current_user.email),
-         {:ok, _token} <- Accounts.deliver_email_confirmation_instructions(user) do
+    user = Accounts.get_by_email(current_user.email)
+
+    with {:ok, _token} <- Accounts.deliver_email_confirmation_instructions(user) do
       json(conn, %{ok: true})
     end
   end
