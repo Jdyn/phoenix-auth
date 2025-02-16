@@ -48,11 +48,9 @@ defmodule Nimble.AccountController do
       # If the user made the request within a
       # session, just keep their current session.
       if get_session(conn, :user_token) do
-        dbg("skipping")
         render(conn, :show, user: user)
       else
         token = Sessions.create_session_token(user)
-        dbg("creating")
 
         conn
         |> renew_session()

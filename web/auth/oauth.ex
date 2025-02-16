@@ -5,14 +5,14 @@ defmodule Nimble.Auth.OAuth do
   @spec request(String.t()) :: {:ok, %{url: String.t(), session_params: map()}} | {:not_found, String.t()}
   def request(provider) do
     config = config!(provider)
-    config |> config[:strategy].authorize_url() |> dbg()
+    config |> config[:strategy].authorize_url()
   end
 
   @spec callback(String.t(), map(), map()) :: {:ok, %{user: %User{}, token: String.t()}} | {:not_found, String.t()}
   def callback(provider, params, session_params \\ %{}) do
     config = config!(provider)
 
-    config |> Keyword.put(:session_params, session_params) |> config[:strategy].callback(params) |> dbg()
+    config |> Keyword.put(:session_params, session_params) |> config[:strategy].callback(params)
   end
 
   @spec config!(String.t()) :: list | nil
@@ -26,6 +26,6 @@ defmodule Nimble.Auth.OAuth do
 
   defp build_uri(provider) do
     base_uri = System.fetch_env!("OAUTH_REDIRECT_URI")
-    "#{base_uri}/#{provider}" |> dbg
+    "#{base_uri}/#{provider}"
   end
 end
