@@ -11,7 +11,7 @@ defmodule Nimble.User do
 
   @derive {Inspect, except: [:password]}
 
-  @registration_fields ~w(identifier first_name last_name)a
+  @registration_fields ~w(identifier password first_name last_name)a
   @oauth_registration_fields ~w(email first_name last_name confirmed_at avatar)a
 
   @update_fields ~w(email phone first_name last_name)a
@@ -74,7 +74,9 @@ defmodule Nimble.User do
   def validate_identifier(%Ecto.Changeset{} = changeset) do
     case get_change(changeset, :identifier) do
       nil ->
-        add_error(changeset, :identifier, "is required")
+        # If nil, just continue. `validate_required`
+        # will have already added an error.
+        changeset
 
       identifier ->
         if String.match?(identifier, @email_regex) do
